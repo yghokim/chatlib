@@ -4,8 +4,8 @@ from typing import Awaitable, Any, Callable
 
 import openai
 
-from core.chatbot import ResponseGenerator, Dialogue
-from core.openai_utils import ChatGPTModel, ChatGPTRole, \
+from chatlib.chatbot import ResponseGenerator, Dialogue
+from chatlib.openai_utils import ChatGPTModel, ChatGPTRole, \
     ChatGPTParams, \
     make_chat_completion_message, run_chat_completion
 

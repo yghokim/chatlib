@@ -2,7 +2,7 @@ from typing import TypeAlias
 
 import nanoid
 
-from core.time import get_timestamp
+from chatlib.time import get_timestamp
 
 
 class RegenerateRequestException(Exception):

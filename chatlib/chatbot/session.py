@@ -46,8 +46,8 @@ class ChatSessionBase(ABC):
         if "response_generator" in data:
             self._response_generator.restore_from_json(data["response_generator"])
 
-    def _to_info_dict(self)->dict:
-        parcel = dict(id=self.id, turns=len(self.dialog), response_generator = dict())
+    def _to_info_dict(self) -> dict:
+        parcel = dict(id=self.id, turns=len(self.dialog), response_generator=dict())
         self._response_generator.write_to_json(parcel["response_generator"])
         return parcel
 

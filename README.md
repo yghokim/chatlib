@@ -1,5 +1,4 @@
-# LLM-Driven Chatbot for Enhancing Emotional Awareness in Children
-
+# Chatlib
 
 ## System Requirements
 1. Python 3.10 or higher
@@ -69,5 +68,4 @@ Then run the backend server:
 Access http://localhost on web browser.
 
 ## Author
-* Woosuk Seo (Intern at NAVER AI Lab, PhD candidate at University of Michigan)
 * Young-Ho Kim (NAVER AI Lab)
