@@ -23,49 +23,5 @@
 > python chat.py
 ```
 
-### Testing Chatbot on Web
-
-#### Running on development mode
-1. **Run backend server**
-    ```shell
-    > py main.py
-    ```
-    The default port is 8000. You can set `--port` to designate manually.
-    ```shell
-    > py main.py --port 3000
-    ```
-2. **Run frontend server**
-   
-    The frontend is implemented with React in TypeScript. The development server is run on [Parcel](https://parceljs.org/).
-    ```shell
-    > cd frontend
-    > npm install <-- Run this to install dependencies 
-    > npm run dev
-    ```
-    Access http://localhost:8888 on web browser.
-
-You can perform the above steps using a shell script:
-```shell
-> sh ./run-web-dev.sh
-```
-
-
-#### Running on production mode
-
-The backend server can serve the frontend web under the hood, via the same port.
-To activate this, build the frontend code once:
-
-```shell
-> cd frontend
-> npm run build
-```
-
-Then run the backend server:
-```shell
-> cd ..
-> python3 main.py --production --port 80
-```
-Access http://localhost on web browser.
-
 ## Author
 * Young-Ho Kim (NAVER AI Lab)
