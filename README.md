@@ -1,4 +1,5 @@
 # Chatlib
+A generalizable chatbot library in Python, especially specialized for large language models.
 
 ## System Requirements
 1. Python 3.10 or higher
@@ -24,4 +25,4 @@
 ```
 
 ## Author
-* Young-Ho Kim (NAVER AI Lab)
+* Young-Ho Kim <yghokim@younghokim.net> (NAVER AI Lab)
