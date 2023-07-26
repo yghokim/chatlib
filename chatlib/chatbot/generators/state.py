@@ -44,7 +44,16 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
             self.__current_generator = await self.get_generator(self.__current_state, self.__current_state_payload)
 
         # Generate response from the child generator:
-        return (await self.__current_generator.get_response(dialog))[0], {"state": self.__current_state, "payload": self.__current_state_payload}
+        message, metadata = await self.__current_generator._get_response_impl(dialog)
+
+        additional_metadata = {"state": self.__current_state, "payload": self.__current_state_payload}
+
+        if metadata is not None:
+            metadata.update(additional_metadata)
+        else:
+            metadata = additional_metadata
+
+        return message, metadata
 
     def write_to_json(self, parcel: dict):
         parcel["state"] = self.__current_state
