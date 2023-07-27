@@ -73,7 +73,7 @@ class SessionFileWriter(SessionWriterBase):
         fp = self.__get_dialogue_file_path(session_id)
         if path.exists(fp):
             with jsonlines.open(fp, "r") as reader:
-                return [row for row in reader]
+                return [DialogueTurn(**row) for row in reader]
         else:
             return None
 
