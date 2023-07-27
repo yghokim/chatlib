@@ -21,7 +21,7 @@ A generalizable chatbot library in Python, especially specialized for large lang
 ### Testing Chatbot on Command Line
 3. Run chat.py on command line:
 ```shell
-> python chat.py
+> python test_chat_cli.py
 ```
 
 ## Author
