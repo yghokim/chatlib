@@ -41,7 +41,7 @@ class ChatGPTFewShotMapper(Mapper[InputType, str, ParamsType], Generic[InputType
 
     def __init__(self,
                  base_instruction: str,
-                 model: str = ChatGPTModel.GPT_4,
+                 model: str = ChatGPTModel.GPT_4_latest,
                  gpt_params: ChatGPTParams | None = None,
                  examples: list[tuple[InputType, str]] | None = None
                  ):

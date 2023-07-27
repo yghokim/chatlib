@@ -13,7 +13,7 @@ from chatlib.openai_utils import ChatGPTModel, ChatGPTRole, \
 class ChatGPTResponseGenerator(ResponseGenerator):
 
     def __init__(self,
-                 model: str = ChatGPTModel.GPT_4,
+                 model: str = ChatGPTModel.GPT_4_latest,
                  base_instruction: str | None = None,
                  instruction_parameters: dict | None = None,
                  initial_user_message: str | list[dict] | None = None,
