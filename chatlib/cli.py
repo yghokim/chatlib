@@ -1,9 +1,11 @@
 from os import getcwd, path
 
 from nanoid import generate as generate_id
-
+from yaspin import yaspin
 from chatlib.chatbot import ResponseGenerator, TurnTakingChatSession, DialogueTurn, MultiAgentChatSession
 
+
+CLEAR_LINE = '\033[K'
 
 def __turn_to_string(turn: DialogueTurn) -> str:
     if turn.is_user:
@@ -18,12 +20,17 @@ async def run_chat_loop(response_generator: ResponseGenerator):
     print(f"Start a chat session (id: {session_id}).")
     session = TurnTakingChatSession(session_id, response_generator)
 
+    spinner = yaspin(text="Thinking...")
+    spinner.start()
     system_turn = await session.initialize()
+    spinner.stop()
     print(__turn_to_string(system_turn))  # Print initial message
 
     while True:
         user_message = input("You: ")
+        spinner.start()
         system_turn = await session.push_user_message(DialogueTurn(user_message, is_user=True))
+        spinner.stop()
         print(__turn_to_string(system_turn))
 
 
@@ -33,7 +40,6 @@ async def run_auto_chat_loop(agent_generator: ResponseGenerator, user_generator:
 
     print(f"Start a chat session (id: {session_id}).")
     session = MultiAgentChatSession(session_id, agent_generator, user_generator)
-
     dialogue = await session.generate_conversation(8, lambda turn: print(__turn_to_string(turn)))
 
     output_path = output_path or path.join(getcwd(), f"auto_chat_{session_id}.txt")

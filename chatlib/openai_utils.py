@@ -43,7 +43,7 @@ class ChatGPTParams:
                  temperature: float | None = None,
                  presence_penalty: float | None = None,
                  frequency_penalty: float | None = None,
-                 functions: list[ChatGPTFunctionInfo] | None = None
+                 functions: list[ChatGPTFunctionInfo | dict] | None = None
                  ):
         self.temperature = temperature
         self.presence_penalty = presence_penalty
