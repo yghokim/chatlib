@@ -18,6 +18,11 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
         self.__current_generator: ResponseGenerator | None = None
         self.verbose = verbose
 
+        self.__payload_memory: dict[StateType, dict | None] = dict()
+
+    def _get_memoized_payload(self, state: StateType) -> dict | None:
+        return self.__payload_memory[state] if state in self.__payload_memory else None
+
     # Return response generator for a state
     @abstractmethod
     async def get_generator(self, state: StateType, payload: dict | None) -> ResponseGenerator:
@@ -35,6 +40,7 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
         next_state, next_state_payload = await self.calc_next_state_info(self.__current_state, dialog) or (None, None)
         if next_state is not None:
             pre_state = self.__current_state
+            self.__payload_memory[pre_state] = next_state_payload
             self.__current_state = next_state
             self.__current_state_payload = next_state_payload
             self.__current_generator = await self.get_generator(self.__current_state, self.__current_state_payload)
@@ -59,9 +65,11 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
         parcel["state"] = self.__current_state
         parcel["state_payload"] = self.__current_state_payload
         parcel["verbose"] = self.verbose
+        parcel["payload_memory"] = self.__payload_memory
 
     def restore_from_json(self, parcel: dict):
         self.__current_state = parcel["state"]
         self.__current_state_payload = parcel["state_payload"]
         self.verbose = parcel["verbose"] or False
         self.__current_generator = None
+        self.__payload_memory = parcel["payload_memory"]
