@@ -19,6 +19,7 @@ class ChatGPTResponseGenerator(ResponseGenerator):
                  initial_user_message: str | list[dict] | None = None,
                  params: ChatGPTParams | None = None,
                  function_handler: Callable[[str, dict | None], Awaitable[Any]] | None = None,
+                 special_tokens: list[tuple[str, str, Any]] | None = None,
                  verbose: bool = False
                  ):
 
@@ -27,6 +28,8 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         self.gpt_params = params or ChatGPTParams()
 
         self.initial_user_message = initial_user_message
+
+        self.__special_tokens = special_tokens
 
         self.__base_instruction = base_instruction if base_instruction is not None else "You are a ChatGPT assistant that is empathetic and supportive."
 
@@ -52,9 +55,23 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         self.__resolve_instruction()
 
     async def _get_response_impl(self, dialog: Dialogue) -> tuple[str, dict | None]:
+        message, metadata = await self.__run_chatgpt(dialog)
+        if self.__special_tokens is not None and len(self.__special_tokens) > 0:
+            for token, key, value in self.__special_tokens:
+                if token in message:
+                    message = message.replace(token, "")
+                    if metadata is not None:
+                        metadata[key] = value
+                    else:
+                        metadata = {key: True}
+
+        return message, metadata
+
+    async def __run_chatgpt(self, dialog: Dialogue) -> tuple[str, dict | None]:
         dialogue_converted = []
         for turn in dialog:
-            if turn.metadata is not None and "chatgpt" in turn.metadata and "function_messages" in turn.metadata["chatgpt"]:
+            if turn.metadata is not None and "chatgpt" in turn.metadata and "function_messages" in turn.metadata[
+                "chatgpt"]:
                 dialogue_converted.extend(turn.metadata["chatgpt"]["function_messages"])
             dialogue_converted.append(
                 make_chat_completion_message(turn.message, ChatGPTRole.USER if turn.is_user else ChatGPTRole.ASSISTANT))
