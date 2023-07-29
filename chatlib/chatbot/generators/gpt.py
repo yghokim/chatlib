@@ -4,7 +4,8 @@ from typing import Awaitable, Any, Callable
 
 import openai
 
-from chatlib.chatbot import ResponseGenerator, Dialogue
+from chatlib import dict_utils
+from chatlib.chatbot import ResponseGenerator, Dialogue, DialogueTurn
 from chatlib.openai_utils import ChatGPTModel, ChatGPTRole, \
     ChatGPTParams, \
     make_chat_completion_message, run_chat_completion
@@ -57,24 +58,26 @@ class ChatGPTResponseGenerator(ResponseGenerator):
     async def _get_response_impl(self, dialog: Dialogue) -> tuple[str, dict | None]:
         message, metadata = await self.__run_chatgpt(dialog)
         if self.__special_tokens is not None and len(self.__special_tokens) > 0:
+            original_message = message
             for token, key, value in self.__special_tokens:
                 if token in message:
                     message = message.replace(token, "")
-                    if metadata is not None:
-                        metadata[key] = value
-                    else:
-                        metadata = {key: True}
+                    metadata = dict_utils.set_nested_value(metadata, key, value)
+                    metadata = dict_utils.set_nested_value(metadata, ["chatgpt", "original_message"], original_message)
 
         return message, metadata
 
     async def __run_chatgpt(self, dialog: Dialogue) -> tuple[str, dict | None]:
         dialogue_converted = []
         for turn in dialog:
-            if turn.metadata is not None and "chatgpt" in turn.metadata and "function_messages" in turn.metadata[
-                "chatgpt"]:
+            function_messages = dict_utils.get_nested_value(turn.metadata, ["chatgpt", "function_messages"])
+            if function_messages is not None:
                 dialogue_converted.extend(turn.metadata["chatgpt"]["function_messages"])
+
+            original_message = dict_utils.get_nested_value(turn.metadata, ["chatgpt", "original_message"])
             dialogue_converted.append(
-                make_chat_completion_message(turn.message, ChatGPTRole.USER if turn.is_user else ChatGPTRole.ASSISTANT))
+                make_chat_completion_message(original_message if original_message is not None else turn.message,
+                                             ChatGPTRole.USER if turn.is_user else ChatGPTRole.ASSISTANT))
 
         instruction = self.__instruction
         if instruction is not None:

@@ -13,6 +13,9 @@ if __name__ == "__main__":
     openai.api_key = getenv('OPENAI_API_KEY')
 
     asyncio.run(cli.run_chat_loop(ChatGPTResponseGenerator(
-        base_instruction="You are a helpful assistant that asks the user about their daily activity and feelings.",
-        initial_user_message="Hi!"
+        base_instruction="You are a helpful assistant that asks the user about their daily activity and feelings. "
+                         "Put special token <|Terminate|> at the end of message if the user wants to finish the conversation.",
+        initial_user_message="Hi!",
+        special_tokens=[("<|Terminate|>", "terminate", True)]
+
     )))
