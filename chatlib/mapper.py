@@ -98,7 +98,7 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsTyp
     async def run(self, input: InputType, params: ChatGPTFewShotParamsType | None = None) -> OutputType:
         self.__generator.initial_user_message = self.__get_example_messages(params)
 
-        if params.instruction_params is not None:
+        if params is not None and  params.instruction_params is not None:
             self.__generator.base_instruction = self.base_instruction.format(**params.instruction_params)
 
         resp, _, _ = await self.__generator.get_response(
