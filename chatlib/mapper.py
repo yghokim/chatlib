@@ -21,12 +21,18 @@ class Mapper(Generic[InputType, OutputType, ParamsType], ABC):
         pass
 
 
-class ChatGPTDialogSummarizerParams:
+class ChatGPTFewShotLearnerParams:
 
     def __init__(self,
-                 input_user_alias: str | None = None,
-                 input_system_alias: str | None = None,
+                 instruction_params: dict | None = None
                  ):
+        self.instruction_params = instruction_params
+
+class ChatGPTDialogSummarizerParams(ChatGPTFewShotLearnerParams):
+
+    def __init__(self, input_user_alias: str | None = None, input_system_alias: str | None = None,
+                 instruction_params: dict | None = None):
+        super().__init__(instruction_params)
         self.input_user_alias = input_user_alias
         self.input_system_alias = input_system_alias
 
@@ -37,9 +43,10 @@ DEFAULT_SYSTEM_ALIAS = "<Assistant>"
 ALIAS_SEP = ": "
 TURN_SEP = "\n"
 
+ChatGPTFewShotParamsType = TypeVar("ChatGPTFewShotParamsType", bound=ChatGPTFewShotLearnerParams)
 
 # Map input to string using ChatGPT.
-class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ParamsType], Generic[InputType, OutputType, ParamsType], ABC):
+class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsType], Generic[InputType, OutputType, ChatGPTFewShotParamsType], ABC):
 
     def __init__(self,
                  base_instruction: str,
@@ -61,11 +68,11 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ParamsType], Generic[In
         self.__example_messages_cache: list[dict] | None = None
 
     @abstractmethod
-    def _convert_input_to_message_content(self, input: InputType, params: ParamsType | None = None) -> str:
+    def _convert_input_to_message_content(self, input: InputType, params: ChatGPTFewShotParamsType | None = None) -> str:
         pass
 
     @abstractmethod
-    def _postprocess_chatgpt_output(self, output: str, params: ParamsType | None = None) -> OutputType:
+    def _postprocess_chatgpt_output(self, output: str, params: ChatGPTFewShotParamsType | None = None) -> OutputType:
         """
 
         :param output: A raw output string from the ChatCompletion call.
@@ -75,7 +82,7 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ParamsType], Generic[In
         """
         pass
 
-    def __get_example_messages(self, params: ParamsType | None = None) -> list[dict] | None:
+    def __get_example_messages(self, params: ChatGPTFewShotParamsType | None = None) -> list[dict] | None:
         if self.__examples is not None:
             if self.__example_messages_cache is None:
                 self.__example_messages_cache = list(chain.from_iterable([[
@@ -88,8 +95,12 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ParamsType], Generic[In
         else:
             return None
 
-    async def run(self, input: InputType, params: ParamsType | None = None) -> OutputType:
+    async def run(self, input: InputType, params: ChatGPTFewShotParamsType | None = None) -> OutputType:
         self.__generator.initial_user_message = self.__get_example_messages(params)
+
+        if params.instruction_params is not None:
+            self.__generator.base_instruction = self.base_instruction.format(**params.instruction_params)
+
         resp, _, _ = await self.__generator.get_response(
             [DialogueTurn(self._convert_input_to_message_content(input, params), True)])
         # print(resp)
@@ -112,7 +123,7 @@ class ChatGPTDialogueSummarizer(ChatGPTFewShotMapper[Dialogue, dict, ChatGPTDial
         return TURN_SEP.join(
             [(user_alias if turn.is_user else system_alias) + ALIAS_SEP + turn.message for turn in input])
 
-    def _postprocess_chatgpt_output(self, output: str, params: ParamsType | None = None) -> dict:
+    def _postprocess_chatgpt_output(self, output: str, params: ChatGPTDialogSummarizerParams | None = None) -> dict:
         try:
             return json.loads(output)
         except JSONDecodeError as ex:
