@@ -108,8 +108,9 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsTyp
         try:
             processed_resp = self._postprocess_chatgpt_output(resp, params)
             return processed_resp
-        except RegenerateRequestException:
-            return self.run(input, params)
+        except RegenerateRequestException as ex:
+            print(f"Regeneration requested due to an error - {ex.reason}")
+            return await self.run(input, params)
 
 
 class ChatGPTDialogueSummarizer(ChatGPTFewShotMapper[Dialogue, dict, ChatGPTDialogSummarizerParams]):
