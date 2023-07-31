@@ -4,6 +4,8 @@ from itertools import chain
 from json import JSONDecodeError
 from typing import TypeVar, Generic
 
+from jinja2 import Template
+
 from chatlib.chatbot.generators import ChatGPTResponseGenerator
 
 from chatlib.chatbot import DialogueTurn, Dialogue, RegenerateRequestException
@@ -49,7 +51,7 @@ ChatGPTFewShotParamsType = TypeVar("ChatGPTFewShotParamsType", bound=ChatGPTFewS
 class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsType], Generic[InputType, OutputType, ChatGPTFewShotParamsType], ABC):
 
     def __init__(self,
-                 base_instruction: str,
+                 base_instruction: str | Template,
                  model: str = ChatGPTModel.GPT_4_latest,
                  gpt_params: ChatGPTParams | None = None,
                  examples: list[tuple[InputType, str]] | None = None
@@ -98,8 +100,8 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsTyp
     async def run(self, input: InputType, params: ChatGPTFewShotParamsType | None = None) -> OutputType:
         self.__generator.initial_user_message = self.__get_example_messages(params)
 
-        if params is not None and  params.instruction_params is not None:
-            self.__generator.base_instruction = self.base_instruction.format(**params.instruction_params)
+        if params is not None and  params.instruction_params is not None and isinstance(self.base_instruction, Template):
+            self.__generator.base_instruction = self.base_instruction.render(**params.instruction_params)
 
         resp, _, _ = await self.__generator.get_response(
             [DialogueTurn(self._convert_input_to_message_content(input, params), True)])
