@@ -15,15 +15,15 @@ from chatlib.openai_utils import ChatGPTModel, ChatGPTRole, \
 class ChatGPTResponseGenerator(ResponseGenerator):
     __jinja_env = None
 
-    @staticmethod
+    @classmethod
     def __get_jinja_env(cls: 'ChatGPTResponseGenerator') -> Environment:
         if cls.__jinja_env is None:
             cls.__jinja_env = Environment(loader=BaseLoader())
         return cls.__jinja_env
 
-    @staticmethod
+    @classmethod
     def convert_to_jinja_template(cls: 'ChatGPTResponseGenerator', template_string: str) -> Template:
-        return cls.__get_jinja_env(cls).get_template(template_string)
+        return cls.__get_jinja_env().get_template(template_string)
 
     def __init__(self,
                  model: str = ChatGPTModel.GPT_4_latest,
