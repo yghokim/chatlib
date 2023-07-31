@@ -1,5 +1,6 @@
 import json
 from asyncio import to_thread
+from jinja2 import Template, Environment, BaseLoader
 from typing import Awaitable, Any, Callable
 
 import openai
@@ -11,10 +12,21 @@ from chatlib.openai_utils import ChatGPTModel, ChatGPTRole, \
 
 
 class ChatGPTResponseGenerator(ResponseGenerator):
+    __jinja_env = None
+
+    @staticmethod
+    def __get_jinja_env(cls: 'ChatGPTResponseGenerator') -> Environment:
+        if cls.__jinja_env is None:
+            cls.__jinja_env = Environment(loader=BaseLoader())
+        return cls.__jinja_env
+
+    @staticmethod
+    def convert_to_jinja_template(cls: 'ChatGPTResponseGenerator', template_string: str) -> Template:
+        return cls.__get_jinja_env(cls).get_template(template_string)
 
     def __init__(self,
                  model: str = ChatGPTModel.GPT_4_latest,
-                 base_instruction: str | None = None,
+                 base_instruction: str | Template | None = None,
                  instruction_parameters: dict | None = None,
                  initial_user_message: str | list[dict] | None = None,
                  params: ChatGPTParams | None = None,
@@ -39,8 +51,11 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         self.verbose = verbose
 
     def __resolve_instruction(self):
-        if self.__instruction_parameters is not None:
-            self.__instruction = self.__base_instruction.format(**self.__instruction_parameters)
+        if isinstance(self.__base_instruction, Template):
+            if self.__instruction_parameters is not None:
+                self.__instruction = self.__base_instruction.render(**self.__instruction_parameters)
+            else:
+                self.__instruction = self.__base_instruction.render()
         else:
             self.__instruction = self.__base_instruction
 
@@ -54,7 +69,8 @@ class ChatGPTResponseGenerator(ResponseGenerator):
     async def _get_response_impl(self, dialog: Dialogue) -> tuple[str, dict | None]:
         dialogue_converted = []
         for turn in dialog:
-            if turn.metadata is not None and "chatgpt" in turn.metadata and "function_messages" in turn.metadata["chatgpt"]:
+            if turn.metadata is not None and "chatgpt" in turn.metadata and "function_messages" in turn.metadata[
+                "chatgpt"]:
                 dialogue_converted.extend(turn.metadata["chatgpt"]["function_messages"])
             dialogue_converted.append(
                 make_chat_completion_message(turn.message, ChatGPTRole.USER if turn.is_user else ChatGPTRole.ASSISTANT))
