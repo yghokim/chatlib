@@ -5,7 +5,8 @@ from typing import Awaitable, Any, Callable
 
 import openai
 
-from chatlib.chatbot import ResponseGenerator, Dialogue
+from chatlib import dict_utils
+from chatlib.chatbot import ResponseGenerator, Dialogue, DialogueTurn
 from chatlib.openai_utils import ChatGPTModel, ChatGPTRole, \
     ChatGPTParams, \
     make_chat_completion_message, run_chat_completion
@@ -31,6 +32,7 @@ class ChatGPTResponseGenerator(ResponseGenerator):
                  initial_user_message: str | list[dict] | None = None,
                  params: ChatGPTParams | None = None,
                  function_handler: Callable[[str, dict | None], Awaitable[Any]] | None = None,
+                 special_tokens: list[tuple[str, str, Any]] | None = None,
                  verbose: bool = False
                  ):
 
@@ -39,6 +41,8 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         self.gpt_params = params or ChatGPTParams()
 
         self.initial_user_message = initial_user_message
+
+        self.__special_tokens = special_tokens
 
         self.__base_instruction = base_instruction if base_instruction is not None else "You are a ChatGPT assistant that is empathetic and supportive."
 
@@ -59,6 +63,15 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         else:
             self.__instruction = self.__base_instruction
 
+    @property
+    def base_instruction(self)->str:
+        return self.__base_instruction
+
+    @base_instruction.setter
+    def base_instruction(self, new: str):
+        self.__base_instruction = new
+        self.__resolve_instruction()
+
     def update_instruction_parameters(self, params: dict):
         if self.__instruction_parameters is not None:
             self.__instruction_parameters.update(params)
@@ -67,13 +80,28 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         self.__resolve_instruction()
 
     async def _get_response_impl(self, dialog: Dialogue) -> tuple[str, dict | None]:
+        message, metadata = await self.__run_chatgpt(dialog)
+        if self.__special_tokens is not None and len(self.__special_tokens) > 0:
+            original_message = message
+            for token, key, value in self.__special_tokens:
+                if token in message:
+                    message = message.replace(token, "")
+                    metadata = dict_utils.set_nested_value(metadata, key, value)
+                    metadata = dict_utils.set_nested_value(metadata, ["chatgpt", "original_message"], original_message)
+
+        return message, metadata
+
+    async def __run_chatgpt(self, dialog: Dialogue) -> tuple[str, dict | None]:
         dialogue_converted = []
         for turn in dialog:
-            if turn.metadata is not None and "chatgpt" in turn.metadata and "function_messages" in turn.metadata[
-                "chatgpt"]:
+            function_messages = dict_utils.get_nested_value(turn.metadata, ["chatgpt", "function_messages"])
+            if function_messages is not None:
                 dialogue_converted.extend(turn.metadata["chatgpt"]["function_messages"])
+
+            original_message = dict_utils.get_nested_value(turn.metadata, ["chatgpt", "original_message"])
             dialogue_converted.append(
-                make_chat_completion_message(turn.message, ChatGPTRole.USER if turn.is_user else ChatGPTRole.ASSISTANT))
+                make_chat_completion_message(original_message if original_message is not None else turn.message,
+                                             ChatGPTRole.USER if turn.is_user else ChatGPTRole.ASSISTANT))
 
         instruction = self.__instruction
         if instruction is not None:

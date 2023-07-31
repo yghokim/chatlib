@@ -35,12 +35,13 @@ async def run_chat_loop(response_generator: ResponseGenerator):
 
 
 async def run_auto_chat_loop(agent_generator: ResponseGenerator, user_generator: ResponseGenerator,
+                             max_turns: int = 8,
                              output_path: str = None):
     session_id = generate_id()
 
     print(f"Start a chat session (id: {session_id}).")
     session = MultiAgentChatSession(session_id, agent_generator, user_generator)
-    dialogue = await session.generate_conversation(8, lambda turn: print(__turn_to_string(turn)))
+    dialogue = await session.generate_conversation(max_turns, lambda turn: print(__turn_to_string(turn)))
 
     output_path = output_path or path.join(getcwd(), f"auto_chat_{session_id}.txt")
     with open(output_path, "w", encoding='utf-8') as f:
