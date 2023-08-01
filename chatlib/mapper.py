@@ -1,9 +1,11 @@
 import json
+import string
 from abc import ABC, abstractmethod
 from itertools import chain
 from json import JSONDecodeError
 from typing import TypeVar, Generic
 
+from chatlib.jinja_utils import convert_to_jinja_template
 from jinja2 import Template
 
 from chatlib.chatbot.generators import ChatGPTResponseGenerator
@@ -39,11 +41,12 @@ class ChatGPTDialogSummarizerParams(ChatGPTFewShotLearnerParams):
         self.input_system_alias = input_system_alias
 
 
-DEFAULT_USER_ALIAS = "<User>"
-DEFAULT_SYSTEM_ALIAS = "<Assistant>"
+DEFAULT_USER_ALIAS = "User"
+DEFAULT_SYSTEM_ALIAS = "AI"
 
-ALIAS_SEP = ": "
 TURN_SEP = "\n"
+
+DIALOGUE_TEMPLATE = string.Template("{$alias: $message}")
 
 ChatGPTFewShotParamsType = TypeVar("ChatGPTFewShotParamsType", bound=ChatGPTFewShotLearnerParams)
 
@@ -124,11 +127,11 @@ class ChatGPTDialogueSummarizer(ChatGPTFewShotMapper[Dialogue, dict, ChatGPTDial
             params.input_system_alias if params is not None and params.input_system_alias is not None else DEFAULT_SYSTEM_ALIAS)
 
         return TURN_SEP.join(
-            [(user_alias if turn.is_user else system_alias) + ALIAS_SEP + turn.message for turn in input])
+            [DIALOGUE_TEMPLATE.safe_substitute(alias=user_alias if turn.is_user else system_alias, message=turn.message) for turn in input])
 
     def _postprocess_chatgpt_output(self, output: str, params: ChatGPTDialogSummarizerParams | None = None) -> dict:
         try:
             return json.loads(output)
         except JSONDecodeError as ex:
             print(ex)
-            raise RegenerateRequestException("Malformed JSON")
+            raise RegenerateRequestException(f"Malformed JSON. Retry ChatCompletion. Original text: \n{output}")
