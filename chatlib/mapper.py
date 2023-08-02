@@ -46,9 +46,12 @@ class ChatGPTDialogSummarizerParams(ChatGPTFewShotLearnerParams):
 DEFAULT_USER_ALIAS = "User"
 DEFAULT_SYSTEM_ALIAS = "AI"
 
-TURN_SEP = "\n"
-
-DIALOGUE_TEMPLATE = string.Template("$alias: $message")
+DIALOGUE_TEMPLATE = convert_to_jinja_template("""
+<dialogue>
+{% for turn in dialogue %}
+{%- if turn.is_user == true %}{{user_alias}}{%-else-%}{{system_alias}}{%-endif-%}: <msg>{{turn.message}}</msg>
+{%endfor%}</dialogue>
+""")
 
 ChatGPTFewShotParamsType = TypeVar("ChatGPTFewShotParamsType", bound=ChatGPTFewShotLearnerParams)
 
@@ -128,8 +131,7 @@ class ChatGPTDialogueSummarizer(ChatGPTFewShotMapper[Dialogue, dict, ChatGPTDial
         system_alias = (
             params.input_system_alias if params is not None and params.input_system_alias is not None else DEFAULT_SYSTEM_ALIAS)
 
-        return TURN_SEP.join(
-            [DIALOGUE_TEMPLATE.safe_substitute(alias=user_alias if turn.is_user else system_alias, message=turn.message) for turn in input])
+        return DIALOGUE_TEMPLATE.render(user_alias=user_alias, system_alias=system_alias, dialogue=input)
 
     def _postprocess_chatgpt_output(self, output: str, params: ChatGPTDialogSummarizerParams | None = None) -> dict:
         try:
