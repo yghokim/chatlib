@@ -3,7 +3,7 @@ import string
 from abc import ABC, abstractmethod
 from itertools import chain
 from json import JSONDecodeError
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, Callable
 
 from chatlib.jinja_utils import convert_to_jinja_template
 from jinja2 import Template
@@ -125,7 +125,18 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsTyp
 
 class ChatGPTDialogueSummarizer(ChatGPTFewShotMapper[Dialogue, dict, ChatGPTDialogSummarizerParams]):
 
+    def __init__(self, base_instruction: str | Template, model: str = ChatGPTModel.GPT_4_latest,
+                 gpt_params: ChatGPTParams | None = None, examples: list[tuple[InputType, str]] | None = None,
+                 dialogue_filter: Callable[[Dialogue, ChatGPTDialogSummarizerParams|None], Dialogue] | None = None
+                 ):
+        super().__init__(base_instruction, model, gpt_params, examples)
+        self.dialogue_filter = dialogue_filter
+
     def _convert_input_to_message_content(self, input: Dialogue, params: ChatGPTDialogSummarizerParams | None = None) -> str:
+
+        if self.dialogue_filter is not None:
+            input = self.dialogue_filter(input, params)
+
         user_alias = (
             params.input_user_alias if params is not None and params.input_user_alias is not None else DEFAULT_USER_ALIAS)
         system_alias = (
