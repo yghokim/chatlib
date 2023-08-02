@@ -34,7 +34,9 @@ class ChatGPTFewShotLearnerParams:
 
 class ChatGPTDialogSummarizerParams(ChatGPTFewShotLearnerParams):
 
-    def __init__(self, input_user_alias: str | None = None, input_system_alias: str | None = None,
+    def __init__(self,
+                 input_user_alias: str | None = None,
+                 input_system_alias: str | None = None,
                  instruction_params: dict | None = None):
         super().__init__(instruction_params)
         self.input_user_alias = input_user_alias
@@ -46,7 +48,7 @@ DEFAULT_SYSTEM_ALIAS = "AI"
 
 TURN_SEP = "\n"
 
-DIALOGUE_TEMPLATE = string.Template("{$alias: $message}")
+DIALOGUE_TEMPLATE = string.Template("$alias: $message")
 
 ChatGPTFewShotParamsType = TypeVar("ChatGPTFewShotParamsType", bound=ChatGPTFewShotLearnerParams)
 
