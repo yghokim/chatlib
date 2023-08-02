@@ -20,11 +20,25 @@ async def run_chat_loop(response_generator: ResponseGenerator):
     print(f"Start a chat session (id: {session_id}).")
     session = TurnTakingChatSession(session_id, response_generator)
 
+    await run_chat_loop_from_session(session, initialize=True)
+
+
+async def run_chat_loop_from_session(session: TurnTakingChatSession, initialize: bool = False):
+
+    print(f"Resume chat for session {session.id}")
+
     spinner = yaspin(text="Thinking...")
-    spinner.start()
-    system_turn = await session.initialize()
-    spinner.stop()
-    print(__turn_to_string(system_turn))  # Print initial message
+
+    if initialize:
+        spinner.start()
+        system_turn = await session.initialize()
+        spinner.stop()
+        print(__turn_to_string(system_turn))  # Print initial message
+    elif len(session.dialog) > 0:
+        for turn in session.dialog:
+            print(__turn_to_string(turn))
+
+        print("========Continue chat==========")
 
     while True:
         user_message = input("You: ")
