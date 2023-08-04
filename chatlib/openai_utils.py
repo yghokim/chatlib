@@ -43,14 +43,12 @@ class ChatGPTParams:
                  temperature: float | None = None,
                  presence_penalty: float | None = None,
                  frequency_penalty: float | None = None,
-                 max_tokens: int | None = None,
                  functions: list[ChatGPTFunctionInfo | dict] | None = None
                  ):
         self.temperature = temperature
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
         self.functions = functions
-        self.max_tokens = max_tokens
 
     def to_params(self) -> dict:
         return {key: value for key, value in self.__dict__.items() if value is not None}

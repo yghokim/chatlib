@@ -18,7 +18,7 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
 
         self.__payload_memory: dict[StateType, dict | None] = dict()
 
-        self.__state_history: list[tuple[StateType, list[dict | None]]] = [(initial_state, [initial_state_payload])]
+        self.__state_history: list[tuple[StateType, dict | None]] = [(initial_state, initial_state_payload)]
 
     @property
     def __current_state(self) -> StateType:
@@ -26,13 +26,10 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
 
     @property
     def __current_state_payload(self) -> dict | None:
-        return self.__state_history[len(self.__state_history) - 1][1][-1]
+        return self.__state_history[len(self.__state_history) - 1][1]
 
     def _push_new_state(self, state: StateType, payload: dict | None):
-        if self.__state_history[-1][0] == state:
-            self.__state_history[-1][1].append(payload)
-        else:
-            self.__state_history.append((state, [payload]))
+        self.__state_history.append((state, payload))
 
     def _get_memoized_payload(self, state: StateType) -> dict | None:
         return self.__payload_memory[state] if state in self.__payload_memory else None
@@ -52,7 +49,7 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
 
         # Calculate state and update response generator if the state was changed:
         next_state, next_state_payload = await self.calc_next_state_info(self.__current_state, dialog) or (None, None)
-        if next_state is not None and self.__current_state_payload != next_state_payload:
+        if next_state is not None:
             pre_state = self.__current_state
             self.__payload_memory[pre_state] = next_state_payload
             self._push_new_state(next_state, next_state_payload)
