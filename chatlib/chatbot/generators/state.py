@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from enum import Enum, StrEnum
 from typing import TypeVar, Generic
 
 from chatlib.chatbot import ResponseGenerator, Dialogue
@@ -39,10 +40,25 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
     async def get_generator(self, state: StateType, payload: dict | None) -> ResponseGenerator:
         pass
 
+    @abstractmethod
+    def update_generator(self, generator: ResponseGenerator, payload: dict | None):
+        pass
+
     # Calculate the next state based on the current state and the dialog.
     # Return None if the state does not change.
     @abstractmethod
-    async def calc_next_state_info(self, current: StateType, dialog: Dialogue) -> tuple[StateType, dict | None] | None:
+    async def calc_next_state_info(self, current: StateType, dialog: Dialogue) -> tuple[
+                                                                                      StateType | None, dict | None] | None:
+        """
+
+        :param current: Current state
+        :param dialog: Current dialogue history
+        :return:
+        1) If None: No state change.
+        2) If State not None, the state changes.
+        2) If State None but Payload not None => update the current generator with the payload.
+
+        """
         pass
 
     async def _get_response_impl(self, dialog: Dialogue) -> tuple[str, dict | None]:
@@ -57,7 +73,10 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
             if self.verbose:
                 print(
                     "▤▤▤▤▤▤▤▤▤▤▤▤ State transition from {} to {} ▤▤▤▤▤▤▤▤▤▤▤▤▤".format(pre_state, self.__current_state))
-        elif self.__current_generator is None:
+        elif next_state_payload is not None:  # No state change but generator update.
+            print("Update generator with payload.")
+            self.update_generator(self.__current_generator, next_state_payload)
+        elif self.__current_generator is None:  # No state change but initial run.
             self.__current_generator = await self.get_generator(self.__current_state, self.__current_state_payload)
 
         # Generate response from the child generator:
@@ -72,7 +91,7 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
 
         return message, metadata
 
-    def state_num_appearance(self, state: StateType)->int:
+    def state_num_appearance(self, state: StateType) -> int:
         """
         Get the number of appearance of the state in the history.
         :param state: state
@@ -81,7 +100,7 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
         return len([tup for tup in self.__state_history if tup[0] == state])
 
     @staticmethod
-    def trim_dialogue_recent_n_states(dialogue: Dialogue, N: int)->Dialogue:
+    def trim_dialogue_recent_n_states(dialogue: Dialogue, N: int) -> Dialogue:
         """
         Trim dialogue to only contain turns within recent N turns
         :param dialogue:
@@ -106,7 +125,6 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
                         accum_num_states += 1
 
         return dialogue[pointer:]
-
 
     def write_to_json(self, parcel: dict):
         parcel["state_history"] = self.__state_history
