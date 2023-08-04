@@ -22,11 +22,11 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
         self.__state_history: list[tuple[StateType, dict | None]] = [(initial_state, initial_state_payload)]
 
     @property
-    def __current_state(self) -> StateType:
+    def current_state(self) -> StateType:
         return self.__state_history[len(self.__state_history) - 1][0]
 
     @property
-    def __current_state_payload(self) -> dict | None:
+    def current_state_payload(self) -> dict | None:
         return self.__state_history[len(self.__state_history) - 1][1]
 
     def _push_new_state(self, state: StateType, payload: dict | None):
