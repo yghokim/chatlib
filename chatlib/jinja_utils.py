@@ -1,4 +1,4 @@
-from jinja2 import Environment, Template
+from jinja2 import Environment, Template, Undefined
 
 __jinja_env = None
 
@@ -7,7 +7,7 @@ def __get_jinja_env() -> Environment:
     global __jinja_env
 
     if __jinja_env is None:
-        __jinja_env = Environment()
+        __jinja_env = Environment(undefined=Undefined)
     return __jinja_env
 
 
