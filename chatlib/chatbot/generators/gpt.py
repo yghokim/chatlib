@@ -47,10 +47,14 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         if isinstance(self.__base_instruction, Template):
             if self.__instruction_parameters is not None:
                 self.__instruction = self.__base_instruction.render(**self.__instruction_parameters)
+                self._on_instruction_updated(self.__instruction_parameters)
             else:
                 self.__instruction = self.__base_instruction.render()
         else:
             self.__instruction = self.__base_instruction
+
+    def _on_instruction_updated(self, params: dict):
+        pass
 
     @property
     def base_instruction(self)->str:
