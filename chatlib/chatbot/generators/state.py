@@ -1,19 +1,18 @@
 from abc import ABC, abstractmethod
-from enum import Enum, StrEnum
 from typing import TypeVar, Generic
 
+from chatlib import dict_utils
 from chatlib.chatbot import ResponseGenerator, Dialogue
+from chatlib.message_transformer import MessageTransformerChain, run_message_transformer_chain
 
 StateType = TypeVar('StateType')
 
 
 class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
 
-    def __init__(self,
-                 initial_state: StateType,
-                 initial_state_payload: dict | None = None,
-                 verbose: bool = False
-                 ):
+    def __init__(self, initial_state: StateType, initial_state_payload: dict | None = None,
+                 verbose: bool = False, message_transformers: MessageTransformerChain | None = None):
+        super().__init__(message_transformers)
         self.__current_generator: ResponseGenerator | None = None
         self.verbose = verbose
 
@@ -82,12 +81,8 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
         # Generate response from the child generator:
         message, metadata = await self.__current_generator._get_response_impl(dialog)
 
-        additional_metadata = {"state": self.current_state, "payload": self.current_state_payload}
-
-        if metadata is not None:
-            metadata.update(additional_metadata)
-        else:
-            metadata = additional_metadata
+        metadata = dict_utils.set_nested_value(metadata, "state", self.current_state)
+        metadata = dict_utils.set_nested_value(metadata, "payload", self.current_state_payload)
 
         return message, metadata
 
