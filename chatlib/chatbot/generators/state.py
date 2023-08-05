@@ -79,7 +79,7 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
             self.__current_generator = await self.get_generator(self.current_state, self.current_state_payload)
 
         # Generate response from the child generator:
-        message, metadata = await self.__current_generator._get_response_impl(dialog)
+        message, metadata, elapsed = await self.__current_generator.get_response(dialog)
 
         metadata = dict_utils.set_nested_value(metadata, "state", self.current_state)
         metadata = dict_utils.set_nested_value(metadata, "payload", self.current_state_payload)
