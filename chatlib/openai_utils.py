@@ -7,9 +7,9 @@ import openai
 
 class ChatGPTModel(StrEnum):
     GPT_3_5_latest = "gpt-3.5-turbo"
-    GPT_3_5_16k_latest = "gpt-3.1-turbo-16k"
+    GPT_3_5_16k_latest = "gpt-3.5-turbo-16k"
     GPT_4_latest = "gpt-4"
-    GPT_4_16k_latest = "gpt-4-16k"
+    GPT_4_32k_latest = "gpt-4-32k"
     GPT_4_0613 = "gpt-4-0613"
     GPT_3_5_0613 = "gpt-3.5-0613"
 
