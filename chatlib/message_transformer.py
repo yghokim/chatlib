@@ -33,7 +33,7 @@ class SpecialTokenExtractionTransformer(MessageTransformer):
         self.token = token
         self.onTokenFound = onTokenFound
 
-    def __call__(self, message: str, metadata: dict | None) -> tuple[str, dict | None, bool]:
+    def _transform(self, message: str, metadata: dict | None) -> tuple[str, dict | None, bool]:
         cleaned_message = None
         if isinstance(self.token, Pattern):
             matches = self.token.findall(message)
