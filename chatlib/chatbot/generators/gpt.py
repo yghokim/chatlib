@@ -5,7 +5,7 @@ from jinja2 import Template
 
 from chatlib import dict_utils
 from chatlib.chatbot import ResponseGenerator, Dialogue
-from chatlib.message_transformer import SpecialTokenExtractionTransformer
+from chatlib.message_transformer import SpecialTokenExtractionTransformer, SpecialTokenListExtractionTransformer
 from chatlib.openai_utils import ChatGPTModel, ChatGPTRole, \
     ChatGPTParams, \
     make_chat_completion_message, run_chat_completion
@@ -37,14 +37,15 @@ class ChatGPTResponseGenerator(ResponseGenerator):
 
         if special_tokens is not None and len(special_tokens) > 0:
 
-            transformers = []
-            for token, key, value in special_tokens:
-                def onTokenFound(message: str, metadata: dict | None):
+            def onTokenFound(tokens: list[str], original_message: str, cleaned_message: str, metadata: dict | None):
+                for token in tokens:
+                    key, value = [(k,v) for tok,k,v in special_tokens if tok == token][0]
                     metadata = dict_utils.set_nested_value(metadata, key, value)
-                    return message, metadata
-                transformers.append(SpecialTokenExtractionTransformer(token, token, onTokenFound))
+                metadata = dict_utils.set_nested_value(metadata, ["chatgpt", "token_uncleaned_message"], original_message)
+                return cleaned_message, metadata
+            transformer = SpecialTokenListExtractionTransformer("special_tokens", [tok for tok, k, v in special_tokens], onTokenFound)
 
-            super().__init__(message_transformers=transformers)
+            super().__init__(message_transformers=[transformer])
         else:
             super().__init__()
 
@@ -78,17 +79,13 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         self.__resolve_instruction()
 
     async def _get_response_impl(self, dialog: Dialogue) -> tuple[str, dict | None]:
-        message, metadata = await self.__run_chatgpt(dialog)
-        return message, metadata
-
-    async def __run_chatgpt(self, dialog: Dialogue) -> tuple[str, dict | None]:
         dialogue_converted = []
         for turn in dialog:
             function_messages = dict_utils.get_nested_value(turn.metadata, ["chatgpt", "function_messages"])
             if function_messages is not None:
                 dialogue_converted.extend(turn.metadata["chatgpt"]["function_messages"])
 
-            original_message = dict_utils.get_nested_value(turn.metadata, "original_message")
+            original_message = dict_utils.get_nested_value(turn.metadata, ["chatgpt", "token_uncleaned_message"])
             dialogue_converted.append(
                 make_chat_completion_message(original_message if original_message is not None else turn.message,
                                              ChatGPTRole.USER if turn.is_user else ChatGPTRole.ASSISTANT))

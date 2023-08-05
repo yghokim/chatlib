@@ -51,6 +51,26 @@ class SpecialTokenExtractionTransformer(MessageTransformer):
     def remove_all_regex(cls, name: str, pattern: str | Pattern)->'SpecialTokenExtractionTransformer':
         return SpecialTokenExtractionTransformer(name, re.compile(pattern), None)
 
+class SpecialTokenListExtractionTransformer(MessageTransformer):
+    def __init__(self, name: str, tokens: list[str], onTokenFound: Callable[[list[str], str, str, dict|None], tuple[str, dict | None]] | None = None):
+        super().__init__(name)
+        self.tokens = tokens
+        self.onTokenFound = onTokenFound
+
+    def _transform(self, message: str, metadata: dict | None) -> tuple[str, dict | None, bool]:
+        cleaned_message = message
+        found_tokens = []
+
+        for token in self.tokens:
+            if token in message:
+                cleaned_message = cleaned_message.replace(token, "")
+                found_tokens.append(token)
+
+        if len(found_tokens) > 0 and self.onTokenFound is not None:
+            cleaned_message, metadata = self.onTokenFound(found_tokens, message, cleaned_message, metadata)
+
+        return cleaned_message, metadata, len(found_tokens) > 0
+
 def run_message_transformer_chain(message: str, metadata: dict | None, chain: MessageTransformerChain) -> tuple[str, dict | None]:
     cleaned_message = message
     m = metadata
