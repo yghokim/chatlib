@@ -43,7 +43,7 @@ class SpecialTokenExtractionTransformer(MessageTransformer):
             cleaned_message = message.replace(self.token, "")
 
         if cleaned_message is not None and self.onTokenFound is not None:
-            self.onTokenFound(cleaned_message, metadata)
+            cleaned_message, metadata = self.onTokenFound(cleaned_message, metadata)
 
         return cleaned_message or message, metadata, cleaned_message is not None
 
