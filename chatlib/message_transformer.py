@@ -52,4 +52,9 @@ class SpecialTokenExtractionTransformer(MessageTransformer):
         return SpecialTokenExtractionTransformer(name, re.compile(pattern), None)
 
 def run_message_transformer_chain(message: str, metadata: dict | None, chain: MessageTransformerChain) -> tuple[str, dict | None]:
-    return reduce(lambda t, transformer: transformer(t), chain, (message, metadata))
+    cleaned_message = message
+    m = metadata
+    for t in chain:
+        cleaned_message, m, transformed = t(cleaned_message, m)
+
+    return cleaned_message, m
