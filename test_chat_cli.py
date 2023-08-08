@@ -18,4 +18,4 @@ if __name__ == "__main__":
         initial_user_message="Hi!",
         special_tokens=[("<|Terminate|>", "terminate", True)]
 
-    )))
+    ), commands=cli.DEFAULT_TEST_COMMANDS))

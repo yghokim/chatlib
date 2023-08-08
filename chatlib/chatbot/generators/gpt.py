@@ -78,7 +78,7 @@ class ChatGPTResponseGenerator(ResponseGenerator):
             self.__instruction_parameters = params
         self.__resolve_instruction()
 
-    async def _get_response_impl(self, dialog: Dialogue) -> tuple[str, dict | None]:
+    async def _get_response_impl(self, dialog: Dialogue, dry: bool = False) -> tuple[str, dict | None]:
         dialogue_converted = []
         for turn in dialog:
             function_messages = dict_utils.get_nested_value(turn.metadata, ["chatgpt", "function_messages"])
