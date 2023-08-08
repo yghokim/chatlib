@@ -21,6 +21,10 @@ class ChatSessionBase(ABC):
             print("======Write session info.======")
             self._session_writer.write_session_info(self.id, self._to_info_dict())
 
+    @property
+    def response_generator(self)->ResponseGenerator:
+        return self._response_generator
+
     def load(self) -> bool:
         if self._session_writer is not None and self._session_writer.exists(self.id):
             dialogue = self._session_writer.read_dialogue(self.id)
