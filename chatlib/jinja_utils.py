@@ -1,7 +1,10 @@
 from jinja2 import Environment, Template, Undefined
 
 def list_with_conjunction(value, conjunction='and'):
-    if len(value) == 1:
+    value = [v for v in value if isinstance(v, str)]
+    if len(value) == 0:
+        return ""
+    elif len(value) == 1:
         return value[0]
     elif len(value) == 2:
         return f'{value[0]} {conjunction} {value[1]}'
