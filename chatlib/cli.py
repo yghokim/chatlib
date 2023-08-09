@@ -59,7 +59,7 @@ async def run_chat_loop_from_session(session: TurnTakingChatSession, initialize:
     while True:
         user_message = input("You: ").strip()
 
-        matched_command_actions = [action for cmd, action in commands if (user_message.lower() == cmd if isinstance(cmd, str) else user_message.lower() in cmd)]
+        matched_command_actions = [action for cmd, action in commands if (user_message.lower() == cmd if isinstance(cmd, str) else user_message.lower() in cmd)] if commands is not None else []
         if len(matched_command_actions) > 0:
             print("Run command.")
             spinner.start()
