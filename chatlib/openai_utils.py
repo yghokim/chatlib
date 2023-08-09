@@ -67,7 +67,7 @@ def make_chat_completion_message(message: str, role: str, name: str = None) -> d
 
 
 async def run_chat_completion(model: str, messages: list[dict], gpt_params: ChatGPTParams,
-                                     trial_count: int = 3) -> Any:
+                                     trial_count: int = 5) -> Any:
     trial = 0
     result = None
     while trial <= trial_count and result is None:
@@ -77,7 +77,7 @@ async def run_chat_completion(model: str, messages: list[dict], gpt_params: Chat
                                      messages=messages,
                                      **gpt_params.to_params()
                                      )
-        except openai.APIError as e:
+        except (openai.error.APIError, openai.error.Timeout, openai.error.APIConnectionError) as e:
             result = None
             trial += 1
             print("OpenAI API error - ", e)
