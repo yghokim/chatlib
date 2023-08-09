@@ -1,11 +1,26 @@
+import asyncio
 from os import getcwd, path
+from typing import Callable, TypeAlias, Awaitable
 
 from nanoid import generate as generate_id
 from yaspin import yaspin
 from chatlib.chatbot import ResponseGenerator, TurnTakingChatSession, DialogueTurn, MultiAgentChatSession
 
+CommandDef: TypeAlias = tuple[list[str]|str, Callable[[TurnTakingChatSession], None|Awaitable]]
 
 CLEAR_LINE = '\033[K'
+
+
+async def regen(session: TurnTakingChatSession):
+    system_turn = await session.regenerate_last_system_message()
+    if system_turn is not None:
+        print(__turn_to_string(system_turn))
+
+
+
+DEFAULT_TEST_COMMANDS = [
+    ("regen()", regen)
+]
 
 def __turn_to_string(turn: DialogueTurn) -> str:
     if turn.is_user:
@@ -14,16 +29,17 @@ def __turn_to_string(turn: DialogueTurn) -> str:
         return f"<AI> {turn.message} ({turn.metadata.__str__() if turn.metadata is not None else None}) - {turn.processing_time} sec"
 
 
-async def run_chat_loop(response_generator: ResponseGenerator):
+async def run_chat_loop(response_generator: ResponseGenerator, commands: list[CommandDef] | None = None):
     session_id = generate_id()
 
     print(f"Start a chat session (id: {session_id}).")
     session = TurnTakingChatSession(session_id, response_generator)
 
-    await run_chat_loop_from_session(session, initialize=True)
+    await run_chat_loop_from_session(session, initialize=True, commands=commands)
 
 
-async def run_chat_loop_from_session(session: TurnTakingChatSession, initialize: bool = False):
+async def run_chat_loop_from_session(session: TurnTakingChatSession, initialize: bool = False,
+                                     commands: list[CommandDef] | None = None):
 
     print(f"Resume chat for session {session.id}")
 
@@ -41,11 +57,23 @@ async def run_chat_loop_from_session(session: TurnTakingChatSession, initialize:
         print("========Continue chat==========")
 
     while True:
-        user_message = input("You: ")
-        spinner.start()
-        system_turn = await session.push_user_message(DialogueTurn(user_message, is_user=True))
-        spinner.stop()
-        print(__turn_to_string(system_turn))
+        user_message = input("You: ").strip()
+
+        matched_command_actions = [action for cmd, action in commands if (user_message.lower() == cmd if isinstance(cmd, str) else user_message.lower() in cmd)]
+        if len(matched_command_actions) > 0:
+            print("Run command.")
+            spinner.start()
+            for action in matched_command_actions:
+                if asyncio.iscoroutinefunction(action):
+                    await action(session)
+                else:
+                    action(session)
+            spinner.stop()
+        else:
+            spinner.start()
+            system_turn = await session.push_user_message(DialogueTurn(user_message, is_user=True))
+            spinner.stop()
+            print(__turn_to_string(system_turn))
 
 
 async def run_auto_chat_loop(agent_generator: ResponseGenerator, user_generator: ResponseGenerator,

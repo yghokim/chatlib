@@ -19,7 +19,15 @@ class SessionWriterBase(ABC):
         pass
 
     @abstractmethod
+    def delete_turn(self, session_id: str, turn_id: str)->DialogueTurn | None:
+        pass
+
+    @abstractmethod
     def read_dialogue(self, session_id: str) -> Dialogue:
+        pass
+
+    @abstractmethod
+    def write_dialogue(self, session_id: str, dialog: Dialogue):
         pass
 
     @abstractmethod
@@ -69,6 +77,20 @@ class SessionFileWriter(SessionWriterBase):
         with jsonlines.open(self.__get_dialogue_file_path(session_id, True), 'a') as writer:
             writer.write(turn.__dict__)
 
+
+    def delete_turn(self, session_id: str, turn_id: str) -> DialogueTurn | None:
+        dialogue = self.read_dialogue(session_id)
+        deleted_turn = None
+        for i, turn in enumerate(dialogue):
+            if turn.id == turn_id:
+                deleted_turn = dialogue.pop(i)
+                break
+
+        if deleted_turn is not None:
+            self.write_dialogue(session_id, dialogue)
+
+        return deleted_turn
+
     def read_dialogue(self, session_id: str) -> Dialogue | None:
         fp = self.__get_dialogue_file_path(session_id)
         if path.exists(fp):
@@ -76,6 +98,12 @@ class SessionFileWriter(SessionWriterBase):
                 return [DialogueTurn(**row) for row in reader]
         else:
             return None
+
+    def write_dialogue(self, session_id: str, dialog: Dialogue):
+        fp = self.__get_dialogue_file_path(session_id)
+        if path.exists(fp):
+            with jsonlines.open(fp, "w") as writer:
+                writer.write_all([turn.__dict__ for turn in dialog])
 
     def clear_data(self, session_id) -> bool:
         dir_path = SessionFileWriter.__get_dialogue_directory_path(session_id)

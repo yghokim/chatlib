@@ -4,7 +4,7 @@ from typing import Callable
 from .generator import ResponseGenerator
 from .types import Dialogue, DialogueTurn
 from .session_writer import SessionWriterBase, session_writer
-
+from ..dict_utils import set_nested_value
 
 class ChatSessionBase(ABC):
     def __init__(self, id: str,
@@ -20,6 +20,10 @@ class ChatSessionBase(ABC):
         if self._session_writer is not None:
             print("======Write session info.======")
             self._session_writer.write_session_info(self.id, self._to_info_dict())
+
+    @property
+    def response_generator(self)->ResponseGenerator:
+        return self._response_generator
 
     def load(self) -> bool:
         if self._session_writer is not None and self._session_writer.exists(self.id):
@@ -61,6 +65,13 @@ class ChatSessionBase(ABC):
             self._session_writer.write_turn(self.id, turn)
         self.save()
 
+    def _pop_last_turn(self)->DialogueTurn | None:
+        if len(self._dialog) > 0:
+            pop = self._dialog.pop()
+            if self._session_writer is not None:
+                self._session_writer.delete_turn(self.id, pop.id)
+            return pop
+
 
 class TurnTakingChatSession(ChatSessionBase):
 
@@ -77,6 +88,18 @@ class TurnTakingChatSession(ChatSessionBase):
         system_turn = DialogueTurn(system_message, is_user=False, processing_time=elapsed, metadata=metadata)
         self._push_new_turn(system_turn)
         return system_turn
+
+    async def regenerate_last_system_message(self) -> DialogueTurn | None:
+        if len(self.dialog) > 0 and self.dialog[len(self.dialog) - 1].is_user is False:
+            popped_system_turn = self._pop_last_turn()
+            system_message, metadata, elapsed = await self._response_generator.get_response(self._dialog, dry=True)
+            metadata = set_nested_value(metadata, "regenerated", True)
+            metadata = set_nested_value(metadata, "original_turn", popped_system_turn.__dict__)
+            new_system_turn = DialogueTurn(system_message, is_user=False, processing_time=elapsed, metadata=metadata)
+            self._push_new_turn(new_system_turn)
+            return new_system_turn
+        else:
+            return None
 
 
 class MultiAgentChatSession(ChatSessionBase):

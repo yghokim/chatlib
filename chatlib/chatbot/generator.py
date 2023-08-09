@@ -19,18 +19,18 @@ class ResponseGenerator(ABC):
         pass
 
     @abstractmethod
-    async def _get_response_impl(self, dialog: Dialogue) -> tuple[str, dict | None]:
+    async def _get_response_impl(self, dialog: Dialogue, dry:bool = False) -> tuple[str, dict | None]:
         pass
 
-    async def get_response(self, dialog: Dialogue) -> tuple[str, dict | None, int]:
+    async def get_response(self, dialog: Dialogue, dry: bool = False) -> tuple[str, dict | None, int]:
         start = perf_counter()
 
         try:
             self._pre_get_response(dialog)
-            response, metadata = await self._get_response_impl(dialog)
+            response, metadata = await self._get_response_impl(dialog, dry)
         except RegenerateRequestException as regen:
             print(f"Regenerate response. Reason: {regen.reason}")
-            response, metadata = await self._get_response_impl(dialog)
+            response, metadata = await self._get_response_impl(dialog, dry)
         except Exception as ex:
             raise ex
 

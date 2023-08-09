@@ -60,26 +60,26 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
         """
         pass
 
-    async def _get_response_impl(self, dialog: Dialogue) -> tuple[str, dict | None]:
-
-        # Calculate state and update response generator if the state was changed:
-        next_state, next_state_payload = await self.calc_next_state_info(self.current_state, dialog) or (None, None)
-        if next_state is not None:
-            pre_state = self.current_state
-            self.__payload_memory[pre_state] = next_state_payload
-            self._push_new_state(next_state, next_state_payload)
-            self.__current_generator = await self.get_generator(self.current_state, self.current_state_payload)
-            if self.verbose:
-                print(
-                    "▤▤▤▤▤▤▤▤▤▤▤▤ State transition from {} to {} ▤▤▤▤▤▤▤▤▤▤▤▤▤".format(pre_state, self.current_state))
-        elif next_state_payload is not None:  # No state change but generator update.
-            print("Update generator with payload.")
-            self.update_generator(self.__current_generator, next_state_payload)
-        elif self.__current_generator is None:  # No state change but initial run.
-            self.__current_generator = await self.get_generator(self.current_state, self.current_state_payload)
+    async def _get_response_impl(self, dialog: Dialogue, dry: bool = False) -> tuple[str, dict | None]:
+        if dry is False: # Update state only when the dry flag is False.
+            # Calculate state and update response generator if the state was changed:
+            next_state, next_state_payload = await self.calc_next_state_info(self.current_state, dialog) or (None, None)
+            if next_state is not None:
+                pre_state = self.current_state
+                self.__payload_memory[pre_state] = next_state_payload
+                self._push_new_state(next_state, next_state_payload)
+                self.__current_generator = await self.get_generator(self.current_state, self.current_state_payload)
+                if self.verbose:
+                    print(
+                        "▤▤▤▤▤▤▤▤▤▤▤▤ State transition from {} to {} ▤▤▤▤▤▤▤▤▤▤▤▤▤".format(pre_state, self.current_state))
+            elif next_state_payload is not None:  # No state change but generator update.
+                print("Update generator with payload.")
+                self.update_generator(self.__current_generator, next_state_payload)
+            elif self.__current_generator is None:  # No state change but initial run.
+                self.__current_generator = await self.get_generator(self.current_state, self.current_state_payload)
 
         # Generate response from the child generator:
-        message, metadata, elapsed = await self.__current_generator.get_response(dialog)
+        message, metadata, elapsed = await self.__current_generator.get_response(dialog, dry)
 
         metadata = dict_utils.set_nested_value(metadata, "state", self.current_state)
         metadata = dict_utils.set_nested_value(metadata, "payload", self.current_state_payload)
