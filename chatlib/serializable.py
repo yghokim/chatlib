@@ -6,7 +6,7 @@ class Serializable:
         return self.__dict__
 
     def to_json(self, indent: int | None = 2) -> str:
-        return json.dumps(self.to_dict(), indent=indent)
+        return json.dumps(recur_to_serializable_dict(self), indent=indent)
 
 def recur_to_serializable_dict(obj: Any) -> Any:
     if isinstance(obj, dict):
