@@ -28,3 +28,4 @@ def extract_last_turn_sequence(dialogue: Dialogue, test: Callable[[DialogueTurn]
             break
 
     return seq
+
