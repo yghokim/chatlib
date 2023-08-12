@@ -36,7 +36,7 @@ class DialogueCSVWriter:
                                      lambda turn, index, params: (index+1),
                                      lambda turn, index, params: "user" if turn.is_user else "system",
                                      TurnValueExtractor("message"),
-                                     TurnValueExtractor(["metadata", "regenerated"])
+                                     lambda turn, index, params: "Yes" if dict_utils.get_nested_value(turn.metadata, "regenerated") is True else "No"
                                  ] + (column_extractors or []) + [
                                      lambda turn, index, params: pendulum.from_timestamp(turn.timestamp/1000, tz=dict_utils.get_nested_value(params, "timezone")).format("YYYY-MM-DD hh:mm:ss.SSS zz"),
                                      TurnValueExtractor("processing_time")
