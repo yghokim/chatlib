@@ -110,9 +110,14 @@ class ChatGPTResponseGenerator(ResponseGenerator):
 
         top_choice = result.choices[0]
 
+        base_metadata = { "chatgpt": {
+                "usage": dict(**result.usage),
+                "model": result.model
+            } }
+
         if top_choice.finish_reason == 'stop':
             response_text = top_choice.message.content
-            return response_text, None
+            return response_text, base_metadata
         elif top_choice.finish_reason == 'function_call':
             function_call_info = top_choice["message"]["function_call"]
             function_name = function_call_info["name"]
@@ -130,11 +135,7 @@ class ChatGPTResponseGenerator(ResponseGenerator):
             top_choice = new_result.choices[0]
             if top_choice.finish_reason == 'stop':
                 response_text = top_choice.message.content
-                return response_text, {
-                    "chatgpt": {
-                        "function_messages": function_messages
-                    }
-                }
+                return response_text, dict_utils.set_nested_value(base_metadata, ["chatgpt", "function_messages"], function_messages)
             else:
                 print("Shouldn't reach here")
 
