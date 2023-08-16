@@ -36,7 +36,7 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
 
     # Return response generator for a state
     @abstractmethod
-    async def get_generator(self, state: StateType, payload: dict | None) -> ResponseGenerator:
+    def get_generator(self, state: StateType, payload: dict | None) -> ResponseGenerator:
         pass
 
     @abstractmethod
@@ -68,7 +68,7 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
                 pre_state = self.current_state
                 self.__payload_memory[pre_state] = next_state_payload
                 self._push_new_state(next_state, next_state_payload)
-                self.__current_generator = await self.get_generator(self.current_state, self.current_state_payload)
+                self.__current_generator = self.get_generator(self.current_state, self.current_state_payload)
                 if self.verbose:
                     print(
                         "▤▤▤▤▤▤▤▤▤▤▤▤ State transition from {} to {} ▤▤▤▤▤▤▤▤▤▤▤▤▤".format(pre_state, self.current_state))
@@ -76,7 +76,7 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
                 print("Update generator with payload.")
                 self.update_generator(self.__current_generator, next_state_payload)
             elif self.__current_generator is None:  # No state change but initial run.
-                self.__current_generator = await self.get_generator(self.current_state, self.current_state_payload)
+                self.__current_generator = self.get_generator(self.current_state, self.current_state_payload)
 
         # Generate response from the child generator:
         message, metadata, elapsed = await self.__current_generator.get_response(dialog, dry)
@@ -131,4 +131,4 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
         self.verbose = parcel["verbose"] or False
         self.__current_generator = None
         self.__payload_memory = parcel["payload_memory"]
-        self.__current_generator = await self.get_generator(self.current_state, self.current_state_payload)
+        self.__current_generator = self.get_generator(self.current_state, self.current_state_payload)
