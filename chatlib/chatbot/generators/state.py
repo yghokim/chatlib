@@ -74,7 +74,7 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
                         "▤▤▤▤▤▤▤▤▤▤▤▤ State transition from {} to {} ▤▤▤▤▤▤▤▤▤▤▤▤▤".format(pre_state, self.current_state))
             elif next_state_payload is not None:  # No state change but generator update.
                 print("Update generator with payload.")
-                self._push_new_state(next_state, next_state_payload)
+                self._push_new_state(self.current_state, next_state_payload)
                 self.update_generator(self.__current_generator, next_state_payload)
             elif self.__current_generator is None:  # No state change but initial run.
                 self.__current_generator = self.get_generator(self.current_state, self.current_state_payload)
