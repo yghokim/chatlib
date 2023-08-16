@@ -71,6 +71,10 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         self.__base_instruction = new
         self.__resolve_instruction()
 
+    @property
+    def _instruction_parameters(self)->dict:
+        return self.__instruction_parameters
+
     def update_instruction_parameters(self, params: dict):
         if self.__instruction_parameters is not None:
             self.__instruction_parameters.update(params)
