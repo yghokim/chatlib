@@ -74,6 +74,7 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
                         "▤▤▤▤▤▤▤▤▤▤▤▤ State transition from {} to {} ▤▤▤▤▤▤▤▤▤▤▤▤▤".format(pre_state, self.current_state))
             elif next_state_payload is not None:  # No state change but generator update.
                 print("Update generator with payload.")
+                self._push_new_state(next_state, next_state_payload)
                 self.update_generator(self.__current_generator, next_state_payload)
             elif self.__current_generator is None:  # No state change but initial run.
                 self.__current_generator = self.get_generator(self.current_state, self.current_state_payload)
@@ -129,6 +130,19 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
     def restore_from_json(self, parcel: dict):
         self.__state_history = parcel["state_history"]
         self.verbose = parcel["verbose"] or False
-        self.__current_generator = None
         self.__payload_memory = parcel["payload_memory"]
-        self.__current_generator = self.get_generator(self.current_state, self.current_state_payload)
+
+        current_state = self.current_state
+        pointer = len(self.__state_history) - 1
+        while pointer > 0:
+            state, payload = self.__state_history[pointer - 1]
+            if state != current_state:
+                break
+            else:
+                pointer -= 1
+
+        self.__current_generator = self.get_generator(self.current_state, self.__state_history[pointer][1])
+        if pointer < len(self.__state_history) - 1:
+            for i in range(pointer+1, len(self.__state_history)):
+                self.update_generator(self.__current_generator, self.__state_history[i][1])
+
