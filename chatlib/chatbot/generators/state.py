@@ -131,3 +131,4 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
         self.verbose = parcel["verbose"] or False
         self.__current_generator = None
         self.__payload_memory = parcel["payload_memory"]
+        self.__current_generator = await self.get_generator(self.current_state, self.current_state_payload)
