@@ -9,7 +9,7 @@ from chatlib.chatbot import ResponseGenerator, Dialogue
 from chatlib.message_transformer import SpecialTokenExtractionTransformer, SpecialTokenListExtractionTransformer
 from chatlib.openai_utils import ChatGPTModel, ChatGPTRole, \
     ChatGPTParams, \
-    make_chat_completion_message, run_chat_completion
+    make_chat_completion_message, run_chat_completion, is_messages_within_token_limit
 
 
 class ChatGPTResponseGenerator(ResponseGenerator):
@@ -88,8 +88,8 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         return await run_chat_completion(self.model, messages + function_messages, self.gpt_params)
 
 
-    async def _on_token_limit_exceed(self, dialog: Dialogue, messages: list[dict], error: InvalidRequestError) -> any:
-        raise error
+    async def _on_token_limit_exceed(self, dialog: Dialogue, messages: list[dict]) -> any:
+        raise InvalidRequestError()
 
     async def _get_response_impl(self, dialog: Dialogue, dry: bool = False) -> tuple[str, dict | None]:
         dialogue_converted = []
@@ -119,11 +119,11 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         else:
             messages = dialogue_converted
 
-        try:
+        if is_messages_within_token_limit(messages, self.model):
             result = await run_chat_completion(self.model, messages, self.gpt_params)
-        except InvalidRequestError as token_error:
+        else:
             print(f"Token overflow - {len(messages)} message(s).")
-            result = await self._on_token_limit_exceed(dialog, messages, token_error)
+            result = await self._on_token_limit_exceed(dialog, messages)
 
         top_choice = result.choices[0]
 
