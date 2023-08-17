@@ -8,7 +8,7 @@ from typing import TypeVar, Generic, Callable
 from chatlib.jinja_utils import convert_to_jinja_template
 from jinja2 import Template
 
-from chatlib.chatbot.generators import ChatGPTResponseGenerator
+from chatlib.chatbot.generators import ChatGPTResponseGenerator, TokenLimitExceedHandler
 
 from chatlib.chatbot import DialogueTurn, Dialogue, RegenerateRequestException
 from chatlib.openai_utils import ChatGPTModel, ChatGPTParams, ChatGPTRole, make_chat_completion_message
@@ -62,7 +62,8 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsTyp
                  base_instruction: str | Template,
                  model: str = ChatGPTModel.GPT_4_latest,
                  gpt_params: ChatGPTParams | None = None,
-                 examples: list[tuple[InputType, str]] | None = None
+                 examples: list[tuple[InputType, str]] | None = None,
+                 token_limit_exceed_handler: TokenLimitExceedHandler | None = None
                  ):
         self.__model = model
         self.__gpt_params = gpt_params or ChatGPTParams()
@@ -71,7 +72,8 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsTyp
         self.__generator = ChatGPTResponseGenerator(
             model=model,
             base_instruction=base_instruction,
-            params=gpt_params
+            params=gpt_params,
+            token_limit_exceed_handler=token_limit_exceed_handler
         )
 
         self.__examples = examples
@@ -127,9 +129,10 @@ class ChatGPTDialogueSummarizer(ChatGPTFewShotMapper[Dialogue, dict, ChatGPTDial
 
     def __init__(self, base_instruction: str | Template, model: str = ChatGPTModel.GPT_4_latest,
                  gpt_params: ChatGPTParams | None = None, examples: list[tuple[InputType, str]] | None = None,
-                 dialogue_filter: Callable[[Dialogue, ChatGPTDialogSummarizerParams|None], Dialogue] | None = None
+                 dialogue_filter: Callable[[Dialogue, ChatGPTDialogSummarizerParams|None], Dialogue] | None = None,
+                 token_limit_exceed_handler: TokenLimitExceedHandler | None = None
                  ):
-        super().__init__(base_instruction, model, gpt_params, examples)
+        super().__init__(base_instruction, model, gpt_params, examples, token_limit_exceed_handler)
         self.dialogue_filter = dialogue_filter
 
     def _convert_input_to_message_content(self, input: Dialogue, params: ChatGPTDialogSummarizerParams | None = None) -> str:

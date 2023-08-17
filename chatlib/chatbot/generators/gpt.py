@@ -1,5 +1,5 @@
 import json
-from typing import Awaitable, Any, Callable
+from typing import Awaitable, Any, Callable, TypeAlias
 
 from jinja2 import Template
 from openai import InvalidRequestError
@@ -11,6 +11,8 @@ from chatlib.openai_utils import ChatGPTModel, ChatGPTRole, \
     ChatGPTParams, \
     make_chat_completion_message, run_chat_completion, is_messages_within_token_limit
 
+TokenLimitExceedHandler: TypeAlias = Callable[[Dialogue, list[dict]], Awaitable[Any]]
+
 
 class ChatGPTResponseGenerator(ResponseGenerator):
 
@@ -18,7 +20,9 @@ class ChatGPTResponseGenerator(ResponseGenerator):
                  instruction_parameters: dict | None = None, initial_user_message: str | list[dict] | None = None,
                  params: ChatGPTParams | None = None,
                  function_handler: Callable[[str, dict | None], Awaitable[Any]] | None = None,
-                 special_tokens: list[tuple[str, str, Any]] | None = None, verbose: bool = False
+                 special_tokens: list[tuple[str, str, Any]] | None = None, verbose: bool = False,
+
+                 token_limit_exceed_handler: TokenLimitExceedHandler | None = None
                  ):
 
         self.model = model
@@ -37,15 +41,20 @@ class ChatGPTResponseGenerator(ResponseGenerator):
 
         self.verbose = verbose
 
+        self.__token_limit_exceed_handler = token_limit_exceed_handler
+
         if special_tokens is not None and len(special_tokens) > 0:
 
             def onTokenFound(tokens: list[str], original_message: str, cleaned_message: str, metadata: dict | None):
                 for token in tokens:
-                    key, value = [(k,v) for tok,k,v in special_tokens if tok == token][0]
+                    key, value = [(k, v) for tok, k, v in special_tokens if tok == token][0]
                     metadata = dict_utils.set_nested_value(metadata, key, value)
-                metadata = dict_utils.set_nested_value(metadata, ["chatgpt", "token_uncleaned_message"], original_message)
+                metadata = dict_utils.set_nested_value(metadata, ["chatgpt", "token_uncleaned_message"],
+                                                       original_message)
                 return cleaned_message, metadata
-            transformer = SpecialTokenListExtractionTransformer("special_tokens", [tok for tok, k, v in special_tokens], onTokenFound)
+
+            transformer = SpecialTokenListExtractionTransformer("special_tokens", [tok for tok, k, v in special_tokens],
+                                                                onTokenFound)
 
             super().__init__(message_transformers=[transformer])
         else:
@@ -65,7 +74,7 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         pass
 
     @property
-    def base_instruction(self)->str:
+    def base_instruction(self) -> str:
         return self.__base_instruction
 
     @base_instruction.setter
@@ -74,7 +83,7 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         self.__resolve_instruction()
 
     @property
-    def _instruction_parameters(self)->dict:
+    def _instruction_parameters(self) -> dict:
         return self.__instruction_parameters
 
     def update_instruction_parameters(self, params: dict):
@@ -84,12 +93,9 @@ class ChatGPTResponseGenerator(ResponseGenerator):
             self.__instruction_parameters = params
         self.__resolve_instruction()
 
-    async def retrieve_response_with_function_result(self, function_name: str, messages: list[dict], function_messages: list[dict]) -> any:
+    async def retrieve_response_with_function_result(self, function_name: str, messages: list[dict],
+                                                     function_messages: list[dict]) -> any:
         return await run_chat_completion(self.model, messages + function_messages, self.gpt_params)
-
-
-    async def _on_token_limit_exceed(self, dialog: Dialogue, messages: list[dict]) -> any:
-        raise InvalidRequestError()
 
     async def _get_response_impl(self, dialog: Dialogue, dry: bool = False) -> tuple[str, dict | None]:
         dialogue_converted = []
@@ -123,14 +129,17 @@ class ChatGPTResponseGenerator(ResponseGenerator):
             result = await run_chat_completion(self.model, messages, self.gpt_params)
         else:
             print(f"Token overflow - {len(messages)} message(s).")
-            result = await self._on_token_limit_exceed(dialog, messages)
+            if self.__token_limit_exceed_handler is not None:
+                result = await self.__token_limit_exceed_handler(dialog, messages)
+            else:
+                raise InvalidRequestError("Token limit exceed.", {})
 
         top_choice = result.choices[0]
 
-        base_metadata = { "chatgpt": {
-                "usage": dict(**result.usage),
-                "model": result.model
-            } }
+        base_metadata = {"chatgpt": {
+            "usage": dict(**result.usage),
+            "model": result.model
+        }}
 
         if top_choice.finish_reason == 'stop':
             response_text = top_choice.message.content
@@ -151,7 +160,8 @@ class ChatGPTResponseGenerator(ResponseGenerator):
             top_choice = new_result.choices[0]
             if top_choice.finish_reason == 'stop':
                 response_text = top_choice.message.content
-                return response_text, dict_utils.set_nested_value(base_metadata, ["chatgpt", "function_messages"], function_messages)
+                return response_text, dict_utils.set_nested_value(base_metadata, ["chatgpt", "function_messages"],
+                                                                  function_messages)
             else:
                 print("Shouldn't reach here")
 
