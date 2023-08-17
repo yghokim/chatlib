@@ -73,7 +73,8 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsTyp
             model=model,
             base_instruction=base_instruction,
             params=gpt_params,
-            token_limit_exceed_handler=token_limit_exceed_handler
+            token_limit_exceed_handler=token_limit_exceed_handler,
+            token_limit_tolerance=1024
         )
 
         self.__examples = examples

@@ -22,7 +22,8 @@ class ChatGPTResponseGenerator(ResponseGenerator):
                  function_handler: Callable[[str, dict | None], Awaitable[Any]] | None = None,
                  special_tokens: list[tuple[str, str, Any]] | None = None, verbose: bool = False,
 
-                 token_limit_exceed_handler: TokenLimitExceedHandler | None = None
+                 token_limit_exceed_handler: TokenLimitExceedHandler | None = None,
+                 token_limit_tolerance: int = 1024
                  ):
 
         self.model = model
@@ -42,6 +43,7 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         self.verbose = verbose
 
         self.__token_limit_exceed_handler = token_limit_exceed_handler
+        self.__token_limit_tolerance = token_limit_tolerance
 
         if special_tokens is not None and len(special_tokens) > 0:
 
@@ -125,7 +127,7 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         else:
             messages = dialogue_converted
 
-        if is_messages_within_token_limit(messages, self.model):
+        if is_messages_within_token_limit(messages, self.model, self.__token_limit_tolerance):
             result = await run_chat_completion(self.model, messages, self.gpt_params)
         else:
             print(f"Token overflow - {len(messages)} message(s).")

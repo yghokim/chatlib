@@ -68,8 +68,8 @@ def get_token_limit(model: ChatGPTModel):
         raise NotImplementedError(f"token limit for model {model} is not implemented.")
 
 
-def is_messages_within_token_limit(messages: list[dict], model: ChatGPTModel) -> bool:
-    return count_token_in_messages(messages, model) < get_token_limit(model)
+def is_messages_within_token_limit(messages: list[dict], model: ChatGPTModel, tolerance: int = 120) -> bool:
+    return count_token_in_messages(messages, model) < get_token_limit(model) - tolerance
 
 
 def make_chat_completion_message(message: str, role: str, name: str = None) -> dict:
