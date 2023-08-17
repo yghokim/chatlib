@@ -2,6 +2,7 @@ import json
 from typing import Awaitable, Any, Callable
 
 from jinja2 import Template
+from openai import InvalidRequestError
 
 from chatlib import dict_utils
 from chatlib.chatbot import ResponseGenerator, Dialogue
@@ -17,7 +18,8 @@ class ChatGPTResponseGenerator(ResponseGenerator):
                  instruction_parameters: dict | None = None, initial_user_message: str | list[dict] | None = None,
                  params: ChatGPTParams | None = None,
                  function_handler: Callable[[str, dict | None], Awaitable[Any]] | None = None,
-                 special_tokens: list[tuple[str, str, Any]] | None = None, verbose: bool = False):
+                 special_tokens: list[tuple[str, str, Any]] | None = None, verbose: bool = False
+                 ):
 
         self.model = model
 
@@ -86,6 +88,9 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         return await run_chat_completion(self.model, messages + function_messages, self.gpt_params)
 
 
+    async def _on_token_limit_exceed(self, dialog: Dialogue, messages: list[dict], error: InvalidRequestError) -> any:
+        raise error
+
     async def _get_response_impl(self, dialog: Dialogue, dry: bool = False) -> tuple[str, dict | None]:
         dialogue_converted = []
         for turn in dialog:
@@ -114,7 +119,11 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         else:
             messages = dialogue_converted
 
-        result = await run_chat_completion(self.model, messages, self.gpt_params)
+        try:
+            result = await run_chat_completion(self.model, messages, self.gpt_params)
+        except InvalidRequestError as token_error:
+            print(f"Token overflow - {len(messages)} message(s).")
+            result = await self._on_token_limit_exceed(dialog, messages, token_error)
 
         top_choice = result.choices[0]
 
