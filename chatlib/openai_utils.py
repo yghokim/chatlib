@@ -104,15 +104,22 @@ async def run_chat_completion(model: str, messages: list[dict], gpt_params: Chat
 
     return result
 
+def get_encoder_for_model(model: ChatGPTModel | str)->Any:
+    try:
+        return tiktoken.encoding_for_model(model)
+    except KeyError:
+        print("Warning: model not found. Using cl100k_base encoding.")
+        return tiktoken.get_encoding("cl100k_base")
+
+def count_tokens(model: ChatGPTModel | str, text: str)->int:
+    return len(get_encoder_for_model(model).encode(text))
 
 # https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
 def count_token_in_messages(messages: list[dict], model: ChatGPTModel) -> int:
     """Return the number of tokens used by a list of messages."""
-    try:
-        encoding = tiktoken.encoding_for_model(model)
-    except KeyError:
-        print("Warning: model not found. Using cl100k_base encoding.")
-        encoding = tiktoken.get_encoding("cl100k_base")
+
+    encoding = get_encoder_for_model(model)
+
     if model in {
         "gpt-3.5-turbo-0613",
         "gpt-3.5-turbo-16k-0613",
