@@ -96,7 +96,7 @@ class ChatGPTResponseGenerator(ResponseGenerator):
         self.__resolve_instruction()
 
     async def retrieve_response_with_function_result(self, function_name: str, messages: list[dict],
-                                                     function_messages: list[dict]) -> any:
+                                                     function_messages: list[dict], function_call_result: str) -> any:
         return await run_chat_completion(self.model, messages + function_messages, self.gpt_params)
 
     async def _get_response_impl(self, dialog: Dialogue, dry: bool = False) -> tuple[str, dict | None]:
@@ -157,7 +157,7 @@ class ChatGPTResponseGenerator(ResponseGenerator):
             function_turn = make_chat_completion_message(function_call_result, ChatGPTRole.FUNCTION, name=function_name)
             function_messages = [top_choice.message, function_turn]
 
-            new_result = await self.retrieve_response_with_function_result(function_name, messages, function_messages)
+            new_result = await self.retrieve_response_with_function_result(function_name, messages, function_messages, function_call_result)
 
             top_choice = new_result.choices[0]
             if top_choice.finish_reason == 'stop':
