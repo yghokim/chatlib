@@ -14,7 +14,7 @@ class ChatGPTModel(StrEnum):
     GPT_4_latest = "gpt-4"
     GPT_4_32k_latest = "gpt-4-32k"
     GPT_4_0613 = "gpt-4-0613"
-    GPT_3_5_0613 = "gpt-3.5-0613"
+    GPT_3_5_0613 = "gpt-3.5-turbo-0613"
 
 
 class ChatGPTFunctionParameterProperty(TypedDict):
