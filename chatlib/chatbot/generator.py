@@ -86,9 +86,9 @@ class ChatCompletionFunctionInfo(TypedDict):
 
 @dataclass(kw_only=True, frozen=True)
 class ChatCompletionParams:
-    temperature: float | None = None,
-    presence_penalty: float | None = None,
-    frequency_penalty: float | None = None,
+    temperature: float | None = None
+    presence_penalty: float | None = None
+    frequency_penalty: float | None = None
     functions: list[ChatCompletionFunctionInfo | dict] | None = None
 
     @cache

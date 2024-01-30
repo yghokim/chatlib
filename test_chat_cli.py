@@ -13,7 +13,7 @@ if __name__ == "__main__":
     AzureLlama2Environment.set_key(env_helper.get_env_variable('AZURE_LLAMA2_KEY'))
 
     asyncio.run(cli.run_chat_loop(ChatCompletionResponseGenerator(
-        api=AzureLlama2ChatCompletionAPI(),
+        api=GPTChatCompletionAPI(),
         model=ChatGPTModel.GPT_4_latest,
         base_instruction="You are a helpful assistant that asks the user about their daily activity and feelings. "
                          "Put special token <|Terminate|> at the end of message only if the user wants to finish the conversation.",
