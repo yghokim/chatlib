@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "chatlib"
-version = "0.5.31"
+version = "0.6.0"
 description = "A generalizable Python Chatbot Library"
 authors = ["Young-Ho Kim <yghokim@younghokim.net>"]
 license = "MIT"
@@ -16,6 +16,7 @@ jsonlines = "^3.1.0"
 yaspin = "^2.3.0"
 jinja2 = "^3.1.2"
 tiktoken = "^0.4.0"
+transformers = "^4.37.2"
 
 
 [build-system]
