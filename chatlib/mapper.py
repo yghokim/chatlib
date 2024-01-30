@@ -5,13 +5,14 @@ from itertools import chain
 from json import JSONDecodeError
 from typing import TypeVar, Generic, Callable
 
+from chatlib.chat_completion import ChatCompletionMessage, ChatCompletionMessageRole
 from chatlib.jinja_utils import convert_to_jinja_template
 from jinja2 import Template
 
-from chatlib.chatbot.generators import ChatGPTResponseGenerator, TokenLimitExceedHandler
+from chatlib.chatbot.generators import ChatGPTResponseGenerator
 
-from chatlib.chatbot import DialogueTurn, Dialogue, RegenerateRequestException
-from chatlib.openai_utils import ChatGPTModel, ChatGPTParams, ChatGPTRole, make_chat_completion_message
+from chatlib.chatbot import DialogueTurn, Dialogue, RegenerateRequestException, TokenLimitExceedHandler
+from chatlib.openai_utils import ChatGPTModel, ChatGPTParams
 
 InputType = TypeVar('InputType')
 OutputType = TypeVar('OutputType')
@@ -31,6 +32,7 @@ class ChatGPTFewShotLearnerParams:
                  instruction_params: dict | None = None
                  ):
         self.instruction_params = instruction_params
+
 
 class ChatGPTDialogSummarizerParams(ChatGPTFewShotLearnerParams):
 
@@ -55,8 +57,10 @@ DIALOGUE_TEMPLATE = convert_to_jinja_template("""
 
 ChatGPTFewShotParamsType = TypeVar("ChatGPTFewShotParamsType", bound=ChatGPTFewShotLearnerParams)
 
+
 # Map input to string using ChatGPT.
-class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsType], Generic[InputType, OutputType, ChatGPTFewShotParamsType], ABC):
+class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsType],
+                           Generic[InputType, OutputType, ChatGPTFewShotParamsType], ABC):
 
     def __init__(self,
                  base_instruction: str | Template,
@@ -81,7 +85,8 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsTyp
         self.__example_messages_cache: list[dict] | None = None
 
     @abstractmethod
-    def _convert_input_to_message_content(self, input: InputType, params: ChatGPTFewShotParamsType | None = None) -> str:
+    def _convert_input_to_message_content(self, input: InputType,
+                                          params: ChatGPTFewShotParamsType | None = None) -> str:
         pass
 
     @abstractmethod
@@ -95,13 +100,13 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsTyp
         """
         pass
 
-    def __get_example_messages(self, params: ChatGPTFewShotParamsType | None = None) -> list[dict] | None:
+    def __get_example_messages(self, params: ChatGPTFewShotParamsType | None = None) -> list[ChatCompletionMessage] | None:
         if self.__examples is not None:
             if self.__example_messages_cache is None:
                 self.__example_messages_cache = list(chain.from_iterable([[
-                    make_chat_completion_message(self._convert_input_to_message_content(sample, params),
-                                                 ChatGPTRole.SYSTEM, "example_user"),
-                    make_chat_completion_message(label, ChatGPTRole.SYSTEM, "example_assistant")
+                    ChatCompletionMessage(self._convert_input_to_message_content(sample, params),
+                                          ChatCompletionMessageRole.SYSTEM, "example_user"),
+                    ChatCompletionMessage(label, ChatCompletionMessageRole.SYSTEM, "example_assistant")
                 ] for sample, label in self.__examples]))
 
             return self.__example_messages_cache
@@ -111,7 +116,7 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsTyp
     async def run(self, input: InputType, params: ChatGPTFewShotParamsType | None = None) -> OutputType:
         self.__generator.initial_user_message = self.__get_example_messages(params)
 
-        if params is not None and  params.instruction_params is not None and isinstance(self.base_instruction, Template):
+        if params is not None and params.instruction_params is not None and isinstance(self.base_instruction, Template):
             self.__generator.base_instruction = self.base_instruction.render(**params.instruction_params)
 
         resp, _, _ = await self.__generator.get_response(
@@ -130,13 +135,14 @@ class ChatGPTDialogueSummarizer(ChatGPTFewShotMapper[Dialogue, dict, ChatGPTDial
 
     def __init__(self, base_instruction: str | Template, model: str = ChatGPTModel.GPT_4_latest,
                  gpt_params: ChatGPTParams | None = None, examples: list[tuple[InputType, str]] | None = None,
-                 dialogue_filter: Callable[[Dialogue, ChatGPTDialogSummarizerParams|None], Dialogue] | None = None,
+                 dialogue_filter: Callable[[Dialogue, ChatGPTDialogSummarizerParams | None], Dialogue] | None = None,
                  token_limit_exceed_handler: TokenLimitExceedHandler | None = None
                  ):
         super().__init__(base_instruction, model, gpt_params, examples, token_limit_exceed_handler)
         self.dialogue_filter = dialogue_filter
 
-    def _convert_input_to_message_content(self, input: Dialogue, params: ChatGPTDialogSummarizerParams | None = None) -> str:
+    def _convert_input_to_message_content(self, input: Dialogue,
+                                          params: ChatGPTDialogSummarizerParams | None = None) -> str:
         user_alias = (
             params.input_user_alias if params is not None and params.input_user_alias is not None else DEFAULT_USER_ALIAS)
         system_alias = (
@@ -150,7 +156,6 @@ class ChatGPTDialogueSummarizer(ChatGPTFewShotMapper[Dialogue, dict, ChatGPTDial
             input = self.dialogue_filter(input, params)
 
         return await super().run(input, params)
-
 
     def _postprocess_chatgpt_output(self, output: str, params: ChatGPTDialogSummarizerParams | None = None) -> dict:
         try:
