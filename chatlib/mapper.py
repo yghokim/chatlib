@@ -76,7 +76,7 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsTyp
         self.__generator = ChatGPTResponseGenerator(
             model=model,
             base_instruction=base_instruction,
-            params=gpt_params,
+            chat_completion_params=gpt_params,
             token_limit_exceed_handler=token_limit_exceed_handler,
             token_limit_tolerance=1024
         )
