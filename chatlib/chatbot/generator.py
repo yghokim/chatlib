@@ -191,17 +191,17 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
             else:
                 raise TokenLimitExceedError()
 
-        top_choice = result.choices[0]
+        top_choice = result["choices"][0]
 
         base_metadata = {"chatcompletion": {
-            "usage": dict(**result.usage),
-            "model": result.model
+            "usage": dict(**result["usage"]),
+            "model": result["model"]
         }}
 
-        if top_choice.finish_reason == 'stop':
-            response_text = top_choice.message.content
+        if top_choice["finish_reason"] == 'stop':
+            response_text = top_choice["message"]["content"]
             return response_text, base_metadata
-        elif top_choice.finish_reason == 'function_call':
+        elif top_choice["finish_reason"] == 'function_call':
             function_call_info = top_choice["message"]["function_call"]
             function_name = function_call_info["name"]
             function_args = json.loads(function_call_info["arguments"])
@@ -211,14 +211,14 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
             function_call_result = await self.function_handler(function_name, function_args)
             function_turn = ChatCompletionMessage(function_call_result, ChatCompletionMessageRole.FUNCTION,
                                                   name=function_name)
-            function_messages = [top_choice.message, function_turn]
+            function_messages = [top_choice["message"], function_turn]
 
             new_result = await self.retrieve_response_with_function_result(function_name, messages, function_messages,
                                                                            function_call_result)
 
             top_choice = new_result.choices[0]
-            if top_choice.finish_reason == 'stop':
-                response_text = top_choice.message.content
+            if top_choice["finish_reason"] == 'stop':
+                response_text = top_choice["message"]["content"]
                 return response_text, dict_utils.set_nested_value(base_metadata,
                                                                   ["chatcompletion", "function_messages"],
                                                                   function_messages)
@@ -226,7 +226,7 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
                 print("Shouldn't reach here")
 
         else:
-            raise Exception(f"ChatGPT error - {top_choice.finish_reason}")
+            raise Exception(f"ChatGPT error - {top_choice['finish_reason']}")
 
     def write_to_json(self, parcel: dict):
         parcel["model"] = self.model
