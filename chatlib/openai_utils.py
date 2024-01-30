@@ -9,7 +9,7 @@ from chatlib.chat_completion import ChatCompletionMessage, ChatCompletionAPI
 
 
 class ChatGPTModel(StrEnum):
-    GPT_3_5_lateste = "gpt-3.5-turbo"
+    GPT_3_5_latest = "gpt-3.5-turbo"
     GPT_3_5_16k_latest = "gpt-3.5-turbo-16k"
     GPT_4_latest = "gpt-4"
     GPT_4_32k_latest = "gpt-4-32k"
