@@ -5,7 +5,7 @@ from jinja2 import Template
 
 from chatlib.azure_llama2_utils import AzureLlama2ChatCompletionAPI
 from chatlib.chat_completion import ChatCompletionAPI, ChatCompletionMessage
-from chatlib.chatbot import ChatCompletionResponseGenerator, TokenLimitExceedHandler
+from chatlib.chatbot import ChatCompletionResponseGenerator, TokenLimitExceedHandler, ChatCompletionParams
 
 
 class Llama2ResponseGenerator(ChatCompletionResponseGenerator):
@@ -18,7 +18,7 @@ class Llama2ResponseGenerator(ChatCompletionResponseGenerator):
     def __init__(self, base_instruction: str | Template | None = None,
                  instruction_parameters: dict | None = None,
                  initial_user_message: str | list[ChatCompletionMessage] | None = None,
-                 chat_completion_params: dict | None = None,
+                 chat_completion_params: ChatCompletionParams | None = None,
                  function_handler: Callable[[str, dict | None], Awaitable[Any]] | None = None,
                  special_tokens: list[tuple[str, str, Any]] | None = None, verbose: bool = False,
                  token_limit_exceed_handler: TokenLimitExceedHandler | None = None, token_limit_tolerance: int = 1024):

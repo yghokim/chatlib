@@ -11,8 +11,9 @@ from jinja2 import Template
 
 from chatlib.chatbot.generators import ChatGPTResponseGenerator
 
-from chatlib.chatbot import DialogueTurn, Dialogue, RegenerateRequestException, TokenLimitExceedHandler
-from chatlib.openai_utils import ChatGPTModel, ChatGPTParams
+from chatlib.chatbot import DialogueTurn, Dialogue, RegenerateRequestException, TokenLimitExceedHandler, \
+    ChatCompletionParams
+from chatlib.openai_utils import ChatGPTModel
 
 InputType = TypeVar('InputType')
 OutputType = TypeVar('OutputType')
@@ -65,12 +66,12 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsTyp
     def __init__(self,
                  base_instruction: str | Template,
                  model: str = ChatGPTModel.GPT_4_latest,
-                 gpt_params: ChatGPTParams | None = None,
+                 gpt_params: ChatCompletionParams | None = None,
                  examples: list[tuple[InputType, str]] | None = None,
                  token_limit_exceed_handler: TokenLimitExceedHandler | None = None
                  ):
         self.__model = model
-        self.__gpt_params = gpt_params or ChatGPTParams()
+        self.__gpt_params = gpt_params or ChatCompletionParams()
 
         self.base_instruction = base_instruction
         self.__generator = ChatGPTResponseGenerator(
@@ -134,7 +135,7 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsTyp
 class ChatGPTDialogueSummarizer(ChatGPTFewShotMapper[Dialogue, dict, ChatGPTDialogSummarizerParams]):
 
     def __init__(self, base_instruction: str | Template, model: str = ChatGPTModel.GPT_4_latest,
-                 gpt_params: ChatGPTParams | None = None, examples: list[tuple[InputType, str]] | None = None,
+                 gpt_params: ChatCompletionParams | None = None, examples: list[tuple[InputType, str]] | None = None,
                  dialogue_filter: Callable[[Dialogue, ChatGPTDialogSummarizerParams | None], Dialogue] | None = None,
                  token_limit_exceed_handler: TokenLimitExceedHandler | None = None
                  ):

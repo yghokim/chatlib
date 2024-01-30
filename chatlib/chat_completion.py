@@ -11,6 +11,7 @@ class ChatCompletionMessageRole(StrEnum):
     ASSISTANT = "assistant"
     FUNCTION = "function"
 
+
 @dataclass(frozen=True)
 class ChatCompletionMessage:
     content: str

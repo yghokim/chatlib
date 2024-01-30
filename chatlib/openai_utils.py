@@ -1,6 +1,6 @@
 from asyncio import to_thread
 from enum import StrEnum
-from typing import TypedDict, Optional, Any, Callable
+from typing import Any
 
 import openai
 import tiktoken
@@ -9,45 +9,12 @@ from chatlib.chat_completion import ChatCompletionMessage, ChatCompletionAPI
 
 
 class ChatGPTModel(StrEnum):
-    GPT_3_5_latest = "gpt-3.5-turbo"
+    GPT_3_5_lateste = "gpt-3.5-turbo"
     GPT_3_5_16k_latest = "gpt-3.5-turbo-16k"
     GPT_4_latest = "gpt-4"
     GPT_4_32k_latest = "gpt-4-32k"
     GPT_4_0613 = "gpt-4-0613"
     GPT_3_5_0613 = "gpt-3.5-turbo-0613"
-
-
-class ChatGPTFunctionParameterProperty(TypedDict):
-    type: str
-    description: Optional[str]
-    enum: Optional[list[str]]
-
-
-class ChatGPTFunctionParameters(TypedDict):
-    type: str
-    properties: dict[str, ChatGPTFunctionParameterProperty]
-
-
-class ChatGPTFunctionInfo(TypedDict):
-    name: str
-    description: Optional[str]
-    parameters: ChatGPTFunctionParameters
-
-
-class ChatGPTParams:
-    def __init__(self,
-                 temperature: float | None = None,
-                 presence_penalty: float | None = None,
-                 frequency_penalty: float | None = None,
-                 functions: list[ChatGPTFunctionInfo | dict] | None = None
-                 ):
-        self.temperature = temperature
-        self.presence_penalty = presence_penalty
-        self.frequency_penalty = frequency_penalty
-        self.functions = functions
-
-    def to_params(self) -> dict:
-        return {key: value for key, value in self.__dict__.items() if value is not None}
 
 
 def get_token_limit(model: str):

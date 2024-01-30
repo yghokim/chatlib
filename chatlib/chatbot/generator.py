@@ -1,7 +1,9 @@
 import json
 from abc import ABC, abstractmethod
+from dataclasses import dataclass, asdict
+from functools import cache
 from time import perf_counter
-from typing import TypeAlias, Callable, Awaitable, Any
+from typing import TypeAlias, Callable, Awaitable, Any, TypedDict, Optional
 
 from jinja2 import Template
 
@@ -59,7 +61,39 @@ class ResponseGenerator(ABC):
         pass
 
 
+##################
+
 TokenLimitExceedHandler: TypeAlias = Callable[[Dialogue, list[ChatCompletionMessage]], Awaitable[Any]]
+
+
+
+class ChatCompletionFunctionParameterProperty(TypedDict):
+    type: str
+    description: Optional[str]
+    enum: Optional[list[str]]
+
+
+class ChatCompletionFunctionParameters(TypedDict):
+    type: str
+    properties: dict[str, ChatCompletionFunctionParameterProperty]
+
+
+class ChatCompletionFunctionInfo(TypedDict):
+    name: str
+    description: Optional[str]
+    parameters: ChatCompletionFunctionParameters
+
+
+@dataclass(kw_only=True, frozen=True)
+class ChatCompletionParams:
+    temperature: float | None = None,
+    presence_penalty: float | None = None,
+    frequency_penalty: float | None = None,
+    functions: list[ChatCompletionFunctionInfo | dict] | None = None
+
+    @cache
+    def to_dict(self) -> dict:
+        return {key: value for key, value in asdict(self).items() if value is not None}
 
 
 class ChatCompletionResponseGenerator(ResponseGenerator):
@@ -70,7 +104,7 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
                  base_instruction: str | Template | None = None,
                  instruction_parameters: dict | None = None,
                  initial_user_message: str | list[ChatCompletionMessage] | None = None,
-                 chat_completion_params: dict | None = None,
+                 chat_completion_params: ChatCompletionParams | None = None,
                  function_handler: Callable[[str, dict | None], Awaitable[Any]] | None = None,
                  special_tokens: list[tuple[str, str, Any]] | None = None, verbose: bool = False,
 
@@ -82,7 +116,7 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
 
         self.model = model
 
-        self.__params = chat_completion_params or {}
+        self.__params: ChatCompletionParams = chat_completion_params or ChatCompletionParams()
 
         self.initial_user_message = initial_user_message
 
@@ -152,7 +186,7 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
     async def retrieve_response_with_function_result(self, function_name: str, messages: list[ChatCompletionMessage],
                                                      function_messages: list[ChatCompletionMessage],
                                                      function_call_result: str) -> any:
-        return await self.__api.run_chat_completion(self.model, messages + function_messages, self.__params)
+        return await self.__api.run_chat_completion(self.model, messages + function_messages, self.__params.to_dict())
 
     async def _get_response_impl(self, dialog: Dialogue, dry: bool = False) -> tuple[str, dict | None]:
         dialogue_converted: list[ChatCompletionMessage] = []
@@ -183,7 +217,7 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
             messages = dialogue_converted
 
         if self.__api.is_messages_within_token_limit(messages, self.model, self.__token_limit_tolerance):
-            result = await self.__api.run_chat_completion(self.model, messages, self.__params)
+            result = await self.__api.run_chat_completion(self.model, messages, self.__params.to_dict())
         else:
             print(f"Token overflow - {len(messages)} message(s).")
             if self.__token_limit_exceed_handler is not None:
@@ -230,7 +264,7 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
 
     def write_to_json(self, parcel: dict):
         parcel["model"] = self.model
-        parcel["params"] = self.__params
+        parcel["params"] = self.__params.to_dict()
         parcel["initial_user_message"] = self.initial_user_message
         parcel["base_instruction"] = self.__base_instruction
         parcel["instruction_parameters"] = self.__instruction_parameters
@@ -238,9 +272,10 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
 
     def restore_from_json(self, parcel: dict):
         self.model = parcel["model"]
-        self.__params = parcel["params"]
+        self.__params = ChatCompletionParams(**parcel["params"])
         self.initial_user_message = parcel["initial_user_message"]
         self.__base_instruction = parcel["base_instruction"]
         self.__instruction_parameters = parcel["instruction_parameters"]
         self.verbose = parcel["verbose"]
         self.__resolve_instruction()
+
