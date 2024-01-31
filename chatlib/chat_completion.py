@@ -29,6 +29,9 @@ class ChatCompletionAPI(ABC):
     def authorize(self) -> bool:
         pass
 
+    def _assert_authorize(self):
+        assert self.authorize(), f"Authorization of {ChatCompletionAPI.__class__.__name__} required."
+
     @abstractmethod
     def is_messages_within_token_limit(self, messages: list[ChatCompletionMessage], model: str,
                                        tolerance: int = 120) -> bool:
@@ -43,7 +46,7 @@ class ChatCompletionAPI(ABC):
     async def run_chat_completion(self, model: str, messages: list[ChatCompletionMessage],
                                   params: dict,
                                   trial_count: int = 5) -> Any:
-        assert self.authorize(), f"Authorization of {ChatCompletionAPI.__class__.__name__} required."
+        self._assert_authorize()
         return await self._run_chat_completion_impl(model, messages, params, trial_count)
 
     @abstractmethod
