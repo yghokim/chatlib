@@ -7,10 +7,6 @@ from chatlib.chatbot import ChatCompletionResponseGenerator
 from chatlib.integration.openai_utils import GPTChatCompletionAPI, ChatGPTModel
 
 if __name__ == "__main__":
-    # Init OpenAI API
-    openai.api_key = env_helper.get_env_variable('OPENAI_API_KEY')
-    AzureLlama2Environment.set_host(env_helper.get_env_variable('AZURE_LLAMA2_HOST'))
-    AzureLlama2Environment.set_key(env_helper.get_env_variable('AZURE_LLAMA2_KEY'))
 
     asyncio.run(cli.run_chat_loop(ChatCompletionResponseGenerator(
         api=GPTChatCompletionAPI(),

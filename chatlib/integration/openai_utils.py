@@ -5,6 +5,7 @@ from typing import Any
 import openai
 import tiktoken
 
+from chatlib import env_helper
 from chatlib.chat_completion import ChatCompletionMessage, ChatCompletionAPI
 
 
@@ -32,11 +33,19 @@ def get_token_limit(model: str):
 
 class GPTChatCompletionAPI(ChatCompletionAPI):
 
+    def authorize(self) -> bool:
+        api_key = env_helper.get_env_variable('OPENAI_API_KEY')
+        if api_key is not None:
+            openai.api_key = api_key
+            return True
+        else:
+            return False
+
     def is_messages_within_token_limit(self, messages: list[ChatCompletionMessage], model: str,
                                        tolerance: int = 120) -> bool:
         return self.count_token_in_messages(messages, model) < get_token_limit(model) - tolerance
 
-    async def run_chat_completion(self, model: str, messages: list[ChatCompletionMessage], params: dict,
+    async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict,
                                   trial_count: int = 5) -> Any:
         trial = 0
         result = None

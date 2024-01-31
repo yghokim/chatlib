@@ -8,6 +8,7 @@ from urllib import request, error, parse
 import json
 from transformers import AutoTokenizer
 
+from chatlib import env_helper
 from chatlib.chat_completion import ChatCompletionAPI, ChatCompletionMessage, TokenLimitExceedError
 
 
@@ -16,6 +17,10 @@ class AzureLlama2Environment:
     _key: str | None = None
 
     ENDPOINT_CHAT_COMPLETION = '/v1/chat/completions'
+
+    @classmethod
+    def is_authorized(cls)->bool:
+        return cls._host is not None and cls._key is not None
 
     @classmethod
     def get_host(cls: 'AzureLlama2Environment') -> str | None:
@@ -59,6 +64,19 @@ class Llama2Model(StrEnum):
 
 class AzureLlama2ChatCompletionAPI(ChatCompletionAPI):
 
+    def authorize(self) -> bool:
+        if AzureLlama2Environment.is_authorized():
+            return True
+        else:
+            host = env_helper.get_env_variable('AZURE_LLAMA2_HOST')
+            key = env_helper.get_env_variable('AZURE_LLAMA2_KEY')
+            if host is not None and key is not None:
+                AzureLlama2Environment.set_host(host)
+                AzureLlama2Environment.set_key(key)
+                return True
+            else:
+                return False
+
     @cache
     def get_tokenizer(self):
         tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-70b-chat-hf")
@@ -68,7 +86,7 @@ class AzureLlama2ChatCompletionAPI(ChatCompletionAPI):
                                        tolerance: int = 120) -> bool:
         return self.count_token_in_messages(messages, model) < 4096 + tolerance
 
-    async def run_chat_completion(self, model: str, messages: list[ChatCompletionMessage], params: dict,
+    async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict,
                                   trial_count: int = 5) -> Any:
         req = request.Request(AzureLlama2Environment.get_chat_completions_endpoint(), str.encode(json.dumps({
             "messages": [msg.to_dict() for msg in messages],
