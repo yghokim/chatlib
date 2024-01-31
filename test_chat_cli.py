@@ -2,9 +2,9 @@ import asyncio
 
 import openai
 from chatlib import cli, env_helper
-from chatlib.azure_llama2_utils import AzureLlama2ChatCompletionAPI, AzureLlama2Environment
+from chatlib.integration.azure_llama2_utils import AzureLlama2Environment
 from chatlib.chatbot import ChatCompletionResponseGenerator
-from chatlib.openai_utils import GPTChatCompletionAPI, ChatGPTModel
+from chatlib.integration.openai_utils import GPTChatCompletionAPI, ChatGPTModel
 
 if __name__ == "__main__":
     # Init OpenAI API

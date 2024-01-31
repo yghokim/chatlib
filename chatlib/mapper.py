@@ -1,5 +1,4 @@
 import json
-import string
 from abc import ABC, abstractmethod
 from itertools import chain
 from json import JSONDecodeError
@@ -13,7 +12,7 @@ from chatlib.chatbot.generators import ChatGPTResponseGenerator
 
 from chatlib.chatbot import DialogueTurn, Dialogue, RegenerateRequestException, TokenLimitExceedHandler, \
     ChatCompletionParams
-from chatlib.openai_utils import ChatGPTModel
+from chatlib.integration.openai_utils import ChatGPTModel
 
 InputType = TypeVar('InputType')
 OutputType = TypeVar('OutputType')

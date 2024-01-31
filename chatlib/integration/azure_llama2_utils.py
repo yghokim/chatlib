@@ -10,6 +10,7 @@ from transformers import AutoTokenizer
 
 from chatlib.chat_completion import ChatCompletionAPI, ChatCompletionMessage, TokenLimitExceedError
 
+
 class AzureLlama2Environment:
     _host: str | None = None
     _key: str | None = None
