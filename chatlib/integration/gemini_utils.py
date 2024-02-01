@@ -83,7 +83,7 @@ class GeminiAPI(ChatCompletionAPI):
         if len(messages) > 0 and messages[0].role is ChatCompletionMessageRole.SYSTEM:
             messages[0] = ChatCompletionMessage(
                 content=f"<System instruction>\n{messages[0].content}\n</System instruction>",
-                role=ChatCompletionMessageRole.USER
+                role=ChatCompletionMessageRole.SYSTEM
             )
 
         if len(messages) >= 2:
