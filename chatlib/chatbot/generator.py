@@ -229,7 +229,8 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
 
         base_metadata = {"chatcompletion": {
             "usage": dict(**result["usage"]),
-            "model": result["model"]
+            "model": result["model"],
+            "raw_response_metadata": dict_utils.get_nested_value(result, "raw_response_metadata")
         }}
 
         if top_choice["finish_reason"] == 'stop':
