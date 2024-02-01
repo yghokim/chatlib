@@ -79,8 +79,13 @@ class GeminiAPI(ChatCompletionAPI):
         return self.count_token_in_messages(messages, model) < 4096 - tolerance
 
     def __convert_messages(self, messages: list[ChatCompletionMessage]) -> list[ChatCompletionMessage]:
-        return [messages[0]] + [
-            ChatCompletionMessage(self.__injected_initial_system_message, ChatCompletionMessageRole.ASSISTANT)] + messages[1:]
+        if len(messages) >= 2:
+            if messages[0].role == ChatCompletionMessageRole.SYSTEM and messages[1].role == ChatCompletionMessageRole.ASSISTANT:
+                return messages
+            else:
+                return [messages[0]] + [ChatCompletionMessage(self.__injected_initial_system_message, ChatCompletionMessageRole.ASSISTANT)] + messages[1:]
+        else:
+            return messages + [ChatCompletionMessage(self.__injected_initial_system_message, ChatCompletionMessageRole.ASSISTANT), ChatCompletionMessage("Hi!", ChatCompletionMessageRole.USER)]
 
     async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict,
                                         trial_count: int = 5) -> Any:
