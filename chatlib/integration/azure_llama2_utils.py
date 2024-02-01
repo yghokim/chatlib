@@ -9,7 +9,8 @@ import json
 from transformers import AutoTokenizer
 
 from chatlib import env_helper
-from chatlib.chat_completion import ChatCompletionAPI, ChatCompletionMessage, TokenLimitExceedError
+from chatlib.chat_completion import ChatCompletionAPI, ChatCompletionMessage, TokenLimitExceedError, \
+    APIAuthorizationVariableSpec, APIAuthorizationVariableType
 
 
 class AzureLlama2Environment:
@@ -64,18 +65,21 @@ class Llama2Model(StrEnum):
 
 class AzureLlama2ChatCompletionAPI(ChatCompletionAPI):
 
-    def authorize(self) -> bool:
-        if AzureLlama2Environment.is_authorized():
-            return True
-        else:
-            host = env_helper.get_env_variable('AZURE_LLAMA2_HOST')
-            key = env_helper.get_env_variable('AZURE_LLAMA2_KEY')
-            if host is not None and key is not None:
-                AzureLlama2Environment.set_host(host)
-                AzureLlama2Environment.set_key(key)
-                return True
-            else:
-                return False
+    __host_spec = APIAuthorizationVariableSpec(variable_type=APIAuthorizationVariableType.Host)
+    __key_spec = APIAuthorizationVariableSpec(variable_type=APIAuthorizationVariableType.Key)
+
+    @property
+    @cache
+    def provider_name(self) -> str:
+        return "Azure Llama2"
+
+    def get_auth_variable_specs(self) -> list[APIAuthorizationVariableSpec]:
+        return [self.__host_spec, self.__key_spec]
+
+    def _authorize_impl(self, variables: dict[APIAuthorizationVariableSpec, Any]) -> bool:
+        AzureLlama2Environment.set_host(variables[self.__host_spec])
+        AzureLlama2Environment.set_key(variables[self.__key_spec])
+        return True
 
     @cache
     def get_tokenizer(self):

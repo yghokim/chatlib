@@ -7,7 +7,8 @@ from google.ai.generativelanguage_v1 import Candidate
 from google.generativeai.types import GenerateContentResponse
 
 from chatlib import env_helper
-from chatlib.chat_completion import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionMessageRole
+from chatlib.chat_completion import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionMessageRole, \
+    APIAuthorizationVariableSpec, APIAuthorizationVariableType
 
 import google.generativeai as genai
 
@@ -64,6 +65,20 @@ def convert_candidate_to_choice(candidate: Candidate) -> dict:
 
 class GeminiAPI(ChatCompletionAPI):
 
+    __api_key_spec = APIAuthorizationVariableSpec(APIAuthorizationVariableType.ApiKey)
+
+    @property
+    @cache
+    def provider_name(self) -> str:
+        return "Google"
+
+    def get_auth_variable_specs(self) -> list[APIAuthorizationVariableSpec]:
+        return [self.__api_key_spec]
+
+    def _authorize_impl(self, variables: dict[APIAuthorizationVariableSpec, Any]) -> bool:
+        genai.configure(api_key=variables[self.__api_key_spec])
+        return True
+
     def __init__(self,
                  safety_settings: list[dict] | None = None,
                  injected_initial_system_message: str = "Okay I will diligently follow that instruction."):
@@ -72,14 +87,6 @@ class GeminiAPI(ChatCompletionAPI):
         self.__chat_model: genai.ChatSession | None = None
         self.__injected_initial_system_message = injected_initial_system_message
         self.__safety_settings = safety_settings or _SAFETY_SETTINGS_BLOCK_NONE
-
-    def authorize(self) -> bool:
-        api_key = env_helper.get_env_variable('GOOGLE_API_KEY')
-        if api_key is not None:
-            genai.configure(api_key=api_key)
-            return True
-        else:
-            return False
 
     @cache
     def model(self) -> genai.GenerativeModel:

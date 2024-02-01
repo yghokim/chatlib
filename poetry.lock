@@ -1560,6 +1560,16 @@ files = [
 ]
 
 [[package]]
+name = "stringcase"
+version = "1.2.0"
+description = "String case converter."
+optional = false
+python-versions = "*"
+files = [
+    {file = "stringcase-1.2.0.tar.gz", hash = "sha256:48a06980661908efe8d9d34eab2b6c13aefa2163b3ced26972902e3bdfd87008"},
+]
+
+[[package]]
 name = "sympy"
 version = "1.12"
 description = "Computer algebra system (CAS) in Python"
@@ -2071,4 +2081,4 @@ termcolor = ">=2.2,<3.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "395b2795b03ff50059d2838aa0393a54ef4c04c105ac233babcb84ecfcc7eb4e"
+content-hash = "aaa5b29ed43b5218d37122e510848b352fcb0a247c4d8406c10928a2aabbcec4"

@@ -1,12 +1,14 @@
 from asyncio import to_thread
 from enum import StrEnum
+from functools import cache
 from typing import Any
 
 import openai
 import tiktoken
 
 from chatlib import env_helper
-from chatlib.chat_completion import ChatCompletionMessage, ChatCompletionAPI
+from chatlib.chat_completion import ChatCompletionMessage, ChatCompletionAPI, APIAuthorizationVariableSpec, \
+    APIAuthorizationVariableType
 
 
 class ChatGPTModel(StrEnum):
@@ -32,21 +34,26 @@ def get_token_limit(model: str):
 
 
 class GPTChatCompletionAPI(ChatCompletionAPI):
+    __api_key_spec = APIAuthorizationVariableSpec(APIAuthorizationVariableType.ApiKey)
 
-    def authorize(self) -> bool:
-        api_key = env_helper.get_env_variable('OPENAI_API_KEY')
-        if api_key is not None:
-            openai.api_key = api_key
-            return True
-        else:
-            return False
+    @property
+    @cache
+    def provider_name(self) -> str:
+        return "Open AI"
+
+    def get_auth_variable_specs(self) -> list[APIAuthorizationVariableSpec]:
+        return [self.__api_key_spec]
+
+    def _authorize_impl(self, variables: dict[APIAuthorizationVariableSpec, Any]) -> bool:
+        openai.api_key = variables[self.__api_key_spec]
+        return True
 
     def is_messages_within_token_limit(self, messages: list[ChatCompletionMessage], model: str,
                                        tolerance: int = 120) -> bool:
         return self.count_token_in_messages(messages, model) < get_token_limit(model) - tolerance
 
     async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict,
-                                  trial_count: int = 5) -> Any:
+                                        trial_count: int = 5) -> Any:
         trial = 0
         result = None
         while trial <= trial_count and result is None:
