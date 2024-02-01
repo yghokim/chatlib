@@ -6,7 +6,7 @@ from nanoid import generate as generate_id
 from yaspin import yaspin
 from chatlib.chatbot import ResponseGenerator, TurnTakingChatSession, DialogueTurn, MultiAgentChatSession
 
-CommandDef: TypeAlias = tuple[list[str]|str, Callable[[TurnTakingChatSession], None|Awaitable]]
+CommandDef: TypeAlias = tuple[list[str] | str, Callable[[TurnTakingChatSession], None | Awaitable]]
 
 CLEAR_LINE = '\033[K'
 
@@ -17,10 +17,10 @@ async def regen(session: TurnTakingChatSession):
         print(__turn_to_string(system_turn))
 
 
-
 DEFAULT_TEST_COMMANDS = [
     ("regen()", regen)
 ]
+
 
 def __turn_to_string(turn: DialogueTurn) -> str:
     if turn.is_user:
@@ -40,7 +40,6 @@ async def run_chat_loop(response_generator: ResponseGenerator, commands: list[Co
 
 async def run_chat_loop_from_session(session: TurnTakingChatSession, initialize: bool = False,
                                      commands: list[CommandDef] | None = None):
-
     print(f"Resume chat for session {session.id}")
 
     spinner = yaspin(text="Thinking...")
@@ -59,7 +58,8 @@ async def run_chat_loop_from_session(session: TurnTakingChatSession, initialize:
     while True:
         user_message = input("You: ").strip()
 
-        matched_command_actions = [action for cmd, action in commands if (user_message.lower() == cmd if isinstance(cmd, str) else user_message.lower() in cmd)] if commands is not None else []
+        matched_command_actions = [action for cmd, action in commands if (user_message.lower() == cmd if isinstance(cmd,
+                                                                                                                    str) else user_message.lower() in cmd)] if commands is not None else []
         if len(matched_command_actions) > 0:
             print("Run command.")
             spinner.start()

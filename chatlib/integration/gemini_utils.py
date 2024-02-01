@@ -94,7 +94,7 @@ class GeminiAPI(ChatCompletionAPI):
 
     def is_messages_within_token_limit(self, messages: list[ChatCompletionMessage], model: str,
                                        tolerance: int = 120) -> bool:
-        self._assert_authorize()
+        self.assert_authorize()
         return self.count_token_in_messages(messages, model) < GEMINI_PRO_TOKEN_LIMIT - tolerance
 
     def __convert_messages(self, messages: list[ChatCompletionMessage]) -> list[ChatCompletionMessage]:
@@ -134,7 +134,7 @@ class GeminiAPI(ChatCompletionAPI):
                 "safety_ratings": {r.category: r.probability for r in response.prompt_feedback.safety_ratings}}}
 
     def count_token_in_messages(self, messages: list[ChatCompletionMessage], model: str) -> int:
-        self._assert_authorize()
+        self.assert_authorize()
         injected_messages = self.__convert_messages(messages)
 
         converted_messages = convert_to_gemini_messages(injected_messages)
