@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, asdict
 from enum import StrEnum
 from os import path, getcwd
+import re
 from typing import Optional, Any, Callable
 from functools import cache
 from questionary import prompt
@@ -66,7 +67,7 @@ class ChatCompletionAPI(ABC):
         pass
 
     def __env_key_for_spec(self, spec: APIAuthorizationVariableSpec) -> str:
-        return constcase(self.provider_name + "_" + spec.variable_type)
+        return re.sub(r'_+', '_', constcase(self.provider_name + "_" + spec.variable_type))
 
     def authorize(self) -> bool:
         variables: dict[APIAuthorizationVariableSpec, Any] = {}
@@ -107,15 +108,11 @@ class ChatCompletionAPI(ABC):
 
             elif spec.variable_type is APIAuthorizationVariableType.Key:
                 default_question_spec.update({
-                    "type": 'text',
-                    "name": spec.variable_type,
                     "message": f'Please enter your key for {self.provider_name}:',
                     "validate": make_non_empty_string_validator("Please enter a valid key.")
                 })
             elif spec.variable_type is APIAuthorizationVariableType.Host:
                 default_question_spec.update({
-                    "type": 'text',
-                    "name": self.__env_key_for_spec(spec),
                     "message": f'Please enter a host address for {self.provider_name}:',
                     "validate": make_non_empty_string_validator("Please enter a valid address.")
                 })

@@ -3,17 +3,18 @@ from typing import Callable, Awaitable, Any
 
 from jinja2 import Template
 
-from chatlib.integration.azure_llama2_api import AzureLlama2ChatCompletionAPI
-from chatlib.chat_completion import ChatCompletionMessage
-from chatlib.chatbot import ChatCompletionResponseGenerator, TokenLimitExceedHandler, ChatCompletionParams
+from chatlib.chat_completion import ChatCompletionAPI, ChatCompletionMessage
+from chatlib.chatbot import ChatCompletionResponseGenerator, ChatCompletionParams, TokenLimitExceedHandler
+from chatlib.integration.mixtral_api import MixtralModels
+from chatlib.integration.together_api import TogetherAPI, TogetherAIModels
 
 
-class Llama2ResponseGenerator(ChatCompletionResponseGenerator):
+class MixtralResponseGenerator(ChatCompletionResponseGenerator):
 
     @classmethod
     @cache
-    def get_api(cls) -> AzureLlama2ChatCompletionAPI:
-        return AzureLlama2ChatCompletionAPI()
+    def get_api(cls) -> TogetherAPI:
+        return TogetherAPI()
 
     def __init__(self, base_instruction: str | Template | None = None,
                  instruction_parameters: dict | None = None,
@@ -22,6 +23,6 @@ class Llama2ResponseGenerator(ChatCompletionResponseGenerator):
                  function_handler: Callable[[str, dict | None], Awaitable[Any]] | None = None,
                  special_tokens: list[tuple[str, str, Any]] | None = None, verbose: bool = False,
                  token_limit_exceed_handler: TokenLimitExceedHandler | None = None, token_limit_tolerance: int = 1024):
-        super().__init__(self.get_api(), "Llama-2-70b-chat-hf", base_instruction, instruction_parameters, initial_user_message,
+        super().__init__(self.get_api(), TogetherAIModels.Mixtral8x7BInstruct, base_instruction, instruction_parameters, initial_user_message,
                          chat_completion_params, function_handler, special_tokens, verbose, token_limit_exceed_handler,
                          token_limit_tolerance)

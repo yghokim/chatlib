@@ -5,7 +5,7 @@ from jinja2 import Template
 
 from chatlib.chat_completion import ChatCompletionMessage
 from chatlib.chatbot import TokenLimitExceedHandler, ChatCompletionResponseGenerator, ChatCompletionParams
-from chatlib.integration.openai_utils import GPTChatCompletionAPI, ChatGPTModel
+from chatlib.integration.openai_api import GPTChatCompletionAPI, ChatGPTModel
 
 
 class ChatGPTResponseGenerator(ChatCompletionResponseGenerator):

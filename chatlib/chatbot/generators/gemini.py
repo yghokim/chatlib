@@ -5,7 +5,7 @@ from jinja2 import Template
 
 from chatlib.chat_completion import ChatCompletionAPI, ChatCompletionMessage
 from chatlib.chatbot import ChatCompletionResponseGenerator, ChatCompletionParams, TokenLimitExceedHandler
-from chatlib.integration.gemini_utils import GeminiAPI
+from chatlib.integration.gemini_api import GeminiAPI
 
 
 class GeminiResponseGenerator(ChatCompletionResponseGenerator):
