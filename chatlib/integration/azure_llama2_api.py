@@ -101,7 +101,7 @@ class AzureLlama2ChatCompletionAPI(ChatCompletionAPI):
         response: HTTPResponse | None = None
         while trial <= trial_count and response is None:
             try:
-                response = await to_thread(request.urlopen, req)
+                response = await to_thread(request.urlopen, url=req)
             except (error.HTTPError, TokenLimitExceedError) as e:
                 response = None
                 trial += 1
