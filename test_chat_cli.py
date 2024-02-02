@@ -6,7 +6,8 @@ from chatlib import cli
 from chatlib.chatbot.generators import ChatGPTResponseGenerator
 from chatlib.chatbot.generators.gemini import GeminiResponseGenerator
 from chatlib.chatbot.generators.llama import Llama2ResponseGenerator
-from chatlib.integration.openai_utils import ChatGPTModel
+from chatlib.chatbot.generators.mixtral import MixtralResponseGenerator
+from chatlib.integration.openai_api import ChatGPTModel
 from global_config import GlobalConfig
 
 
@@ -33,13 +34,21 @@ agent_gemini = GeminiResponseGenerator(
 )
 
 
+agent_mixtral = MixtralResponseGenerator(
+        base_instruction="You are a helpful assistant that asks the user about their daily activity and feelings. "
+                         "Put special token <|Terminate|> at the end of message only if the user wants to finish the conversation.",
+        initial_user_message="Hi!",
+        special_tokens=[("<|Terminate|>", "terminate", True)]
+)
+
+
 if __name__ == "__main__":
     GlobalConfig.is_cli_mode = True
 
     answer = prompt([{
         'type': 'select',
         "name": "agent_model",
-        'choices': ['GPT', 'Llama2', 'Gemini'],
+        'choices': ['GPT', 'Llama2', 'Gemini', "Mixtral"],
         'message': 'Select model you want to converse with:'
     }])
 
@@ -51,9 +60,11 @@ if __name__ == "__main__":
         agent = agent_llama
     elif agent_model == 'Gemini':
         agent = agent_gemini
+    elif agent_model == 'Mixtral':
+        agent = agent_mixtral
     else:
         raise Exception("Invalid model selected")
 
     agent.get_api().assert_authorize()
 
-    asyncio.run(cli.run_chat_loop(agent_gemini, commands=cli.DEFAULT_TEST_COMMANDS))
+    asyncio.run(cli.run_chat_loop(agent, commands=cli.DEFAULT_TEST_COMMANDS))
