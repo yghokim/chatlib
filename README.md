@@ -4,7 +4,6 @@ A generalizable chatbot library in Python, especially specialized for large lang
 ## System Requirements
 1. Python 3.10 or higher
 2. [Poetry](https://python-poetry.org/docs/)
-3. Paid OpenAI API key
 
 ## How To Run
 ### Installation
@@ -13,15 +12,10 @@ A generalizable chatbot library in Python, especially specialized for large lang
 > poetry install
 ```
 
-2. Run the setup script and follow the steps.
-```shell
-> python setup.py
-```
-
 ### Testing Chatbot on Command Line
 3. Run chat.py on command line:
 ```shell
-> python test_chat_cli.py
+> poetry run python test_chat_cli.py
 ```
 
 ## Author
