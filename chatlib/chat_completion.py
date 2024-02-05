@@ -48,12 +48,19 @@ class APIAuthorizationVariableSpec:
 class TokenLimitExceedError(Exception):
     pass
 
+
 class ServiceUnauthorizedError(Exception):
     pass
 
 
+@dataclass(frozen=True)
+class ChatCompletionRetryRequestedException(Exception):
+    caused_by: Exception | None = None
+
+
 def make_non_empty_string_validator(msg: str) -> Callable:
     return lambda text: True if len(text.strip()) > 0 else msg
+
 
 class ChatCompletionAPI(ABC):
 
@@ -87,7 +94,7 @@ class ChatCompletionAPI(ABC):
     def assert_authorize(self):
         if self.authorize():
             return
-        elif GlobalConfig.is_cli_mode: # If on a CLI, authorize directly.
+        elif GlobalConfig.is_cli_mode:  # If on a CLI, authorize directly.
             self._request_auth_variables_cli()
             self.assert_authorize()
         else:
@@ -97,8 +104,8 @@ class ChatCompletionAPI(ABC):
         questions = []
         for spec in self.get_auth_variable_specs():
             default_question_spec = {
-                    "type": 'text',
-                    "name": self.__env_key_for_spec(spec)
+                "type": 'text',
+                "name": self.__env_key_for_spec(spec)
             }
 
             if spec.variable_type is APIAuthorizationVariableType.ApiKey:
@@ -137,17 +144,26 @@ class ChatCompletionAPI(ABC):
 
     @abstractmethod
     async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage],
-                                        params: dict,
-                                        trial_count: int = 5) -> Any:
+                                        params: dict) -> Any:
         pass
 
     async def run_chat_completion(self, model: str, messages: list[ChatCompletionMessage],
                                   params: dict,
                                   trial_count: int = 5) -> Any:
         self.assert_authorize()
-        return await self._run_chat_completion_impl(model, messages, params, trial_count)
+        trial = 0
+        result = None
+        while trial <= trial_count and result is None:
+            try:
+                result = await self._run_chat_completion_impl(model, messages, params)
+            except ChatCompletionRetryRequestedException as e:
+                result = None
+                trial += 1
+                print(f"Retry chat completion of {self.provider_name} - {e.caused_by}")
+
+        return result
+
 
     @abstractmethod
     def count_token_in_messages(self, messages: list[ChatCompletionMessage], model: str) -> int:
         pass
-

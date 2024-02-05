@@ -41,8 +41,7 @@ class TogetherAPI(ChatCompletionAPI):
                                        tolerance: int = 120) -> bool:
         return True
 
-    async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict,
-                                        trial_count: int = 5) -> Any:
+    async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict) -> Any:
         body = {
             "model": model,
             "n": 1,

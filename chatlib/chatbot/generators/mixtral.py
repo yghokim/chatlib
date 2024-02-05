@@ -3,9 +3,8 @@ from typing import Callable, Awaitable, Any
 
 from jinja2 import Template
 
-from chatlib.chat_completion import ChatCompletionAPI, ChatCompletionMessage
+from chatlib.chat_completion import ChatCompletionMessage
 from chatlib.chatbot import ChatCompletionResponseGenerator, ChatCompletionParams, TokenLimitExceedHandler
-from chatlib.integration.mixtral_api import MixtralModels
 from chatlib.integration.together_api import TogetherAPI, TogetherAIModels
 
 

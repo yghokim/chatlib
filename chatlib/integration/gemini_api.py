@@ -116,8 +116,7 @@ class GeminiAPI(ChatCompletionAPI):
                 ChatCompletionMessage(self.__injected_initial_system_message, ChatCompletionMessageRole.ASSISTANT),
                 ChatCompletionMessage("Hi!", ChatCompletionMessageRole.USER)]
 
-    async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict,
-                                        trial_count: int = 5) -> Any:
+    async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict) -> Any:
         injected_messages = self.__convert_messages(messages)
 
         converted_messages = convert_to_gemini_messages(injected_messages)

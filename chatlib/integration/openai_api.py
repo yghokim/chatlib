@@ -8,7 +8,7 @@ import tiktoken
 
 from chatlib import env_helper
 from chatlib.chat_completion import ChatCompletionMessage, ChatCompletionAPI, APIAuthorizationVariableSpec, \
-    APIAuthorizationVariableType
+    APIAuthorizationVariableType, ChatCompletionRetryRequestedException
 
 
 class ChatGPTModel(StrEnum):
@@ -52,25 +52,16 @@ class GPTChatCompletionAPI(ChatCompletionAPI):
                                        tolerance: int = 120) -> bool:
         return self.count_token_in_messages(messages, model) < get_token_limit(model) - tolerance
 
-    async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict,
-                                        trial_count: int = 5) -> Any:
-        trial = 0
-        result = None
-        while trial <= trial_count and result is None:
-            try:
-                result = await to_thread(openai.ChatCompletion.create,
-                                         model=model,
-                                         messages=[message.to_dict() for message in messages],
-                                         **params
-                                         )
-            except (openai.error.APIError, openai.error.Timeout, openai.error.APIConnectionError,
-                    openai.error.ServiceUnavailableError) as e:
-                result = None
-                trial += 1
-                print("OpenAI API error - ", e)
-                print("Retry ChatCompletion.")
-
-        return result
+    async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict) -> Any:
+        try:
+            return await to_thread(openai.ChatCompletion.create,
+                                   model=model,
+                                   messages=[message.to_dict() for message in messages],
+                                   **params
+                                   )
+        except (openai.error.APIError, openai.error.Timeout, openai.error.APIConnectionError,
+                openai.error.ServiceUnavailableError) as e:
+            raise ChatCompletionRetryRequestedException(e) from e
 
     def count_token_in_messages(self, messages: list[ChatCompletionMessage], model: str) -> int:
         encoding = get_encoder_for_model(model)
