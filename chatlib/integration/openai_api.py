@@ -6,9 +6,8 @@ from typing import Any
 import openai
 import tiktoken
 
-from chatlib import env_helper
-from chatlib.chat_completion import ChatCompletionMessage, ChatCompletionAPI, APIAuthorizationVariableSpec, \
-    APIAuthorizationVariableType, ChatCompletionRetryRequestedException
+from chatlib.chat_completion_api import ChatCompletionMessage, ChatCompletionAPI, APIAuthorizationVariableSpec, \
+    APIAuthorizationVariableType, ChatCompletionRetryRequestedException, ChatCompletionResult
 
 
 class ChatGPTModel(StrEnum):
@@ -52,13 +51,23 @@ class GPTChatCompletionAPI(ChatCompletionAPI):
                                        tolerance: int = 120) -> bool:
         return self.count_token_in_messages(messages, model) < get_token_limit(model) - tolerance
 
-    async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict) -> Any:
+    async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict) -> ChatCompletionResult:
         try:
-            return await to_thread(openai.ChatCompletion.create,
+            result = await to_thread(openai.ChatCompletion.create,
                                    model=model,
                                    messages=[message.to_dict() for message in messages],
                                    **params
                                    )
+            converted_result = ChatCompletionResult(
+                message=ChatCompletionMessage.from_dict(result.choices[0].message),
+                finish_reason=result.choices[0].finish_reason,
+                provider=self.provider_name,
+                model=result.model,
+                **result.usage
+            )
+
+            return converted_result
+
         except (openai.error.APIError, openai.error.Timeout, openai.error.APIConnectionError,
                 openai.error.ServiceUnavailableError) as e:
             raise ChatCompletionRetryRequestedException(e) from e

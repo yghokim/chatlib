@@ -1,5 +1,6 @@
 from jinja2 import Environment, Template, Undefined
 
+
 def list_with_conjunction(value, conjunction='and'):
     value = [v for v in value if isinstance(v, str)]
     if len(value) == 0:
@@ -11,7 +12,9 @@ def list_with_conjunction(value, conjunction='and'):
     else:
         return ', '.join(value[:-1]) + f', {conjunction} {value[-1]}'
 
+
 __jinja_env = None
+
 
 def __get_jinja_env() -> Environment:
     global __jinja_env

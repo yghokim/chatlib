@@ -19,14 +19,13 @@ class AsyncSubject(Generic[T]):
             await handler(value)
 
 
-
 class AsyncBehaviorSubject(AsyncSubject[T]):
     def __init__(self, default_value: T):
         super().__init__()
         self._value = default_value
 
     @property
-    def value(self)->T:
+    def value(self) -> T:
         return self._value
 
     async def subscribe(self, on_next: Callable[[T], Awaitable[None]]):

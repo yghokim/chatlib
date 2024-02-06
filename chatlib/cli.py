@@ -4,6 +4,7 @@ from typing import Callable, TypeAlias, Awaitable
 
 from nanoid import generate as generate_id
 from yaspin import yaspin
+
 from chatlib.chatbot import ResponseGenerator, TurnTakingChatSession, DialogueTurn, MultiAgentChatSession
 
 CommandDef: TypeAlias = tuple[list[str] | str, Callable[[TurnTakingChatSession], None | Awaitable]]

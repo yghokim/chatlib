@@ -1,7 +1,7 @@
+import csv
 from io import StringIO
 from numbers import Number
 from typing import TypeAlias, Callable
-import csv
 
 import pendulum
 
@@ -33,12 +33,17 @@ class DialogueCSVWriter:
                                                                                                    "processing_time"]
         self.column_extractors = [
                                      TurnValueExtractor("id"),
-                                     lambda turn, index, params: (index+1),
+                                     lambda turn, index, params: (index + 1),
                                      lambda turn, index, params: "user" if turn.is_user else "system",
                                      TurnValueExtractor("message"),
-                                     lambda turn, index, params: "Yes" if dict_utils.get_nested_value(turn.metadata, "regenerated") is True else "No"
+                                     lambda turn, index, params: "Yes" if dict_utils.get_nested_value(turn.metadata,
+                                                                                                      "regenerated") is True else "No"
                                  ] + (column_extractors or []) + [
-                                     lambda turn, index, params: pendulum.from_timestamp(turn.timestamp/1000, tz=dict_utils.get_nested_value(params, "timezone")).format("YYYY-MM-DD hh:mm:ss.SSS zz"),
+                                     lambda turn, index, params: pendulum.from_timestamp(turn.timestamp / 1000,
+                                                                                         tz=dict_utils.get_nested_value(
+                                                                                             params,
+                                                                                             "timezone")).format(
+                                         "YYYY-MM-DD hh:mm:ss.SSS zz"),
                                      TurnValueExtractor("processing_time")
                                  ]
 
@@ -59,10 +64,10 @@ class DialogueCSVWriter:
         writer.writerow(self.columns)
         writer.writerows([self.convert_turn_to_row(turn, i, params) for i, turn in enumerate(dialogue)])
 
-    def _get_csv_writer(self, output)->csv.writer:
+    def _get_csv_writer(self, output) -> csv.writer:
         return csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
 
-    def to_csv_string(self, dialogue: Dialogue, params: dict | None = None)->str:
+    def to_csv_string(self, dialogue: Dialogue, params: dict | None = None) -> str:
         output = StringIO()
         writer = self._get_csv_writer(output)
 
@@ -79,9 +84,14 @@ class DialogueCSVWriter:
 # Test code
 if __name__ == "__main__":
     dialogue = [
-        DialogueTurn(**{"message": "Hello! How has your day been so far?", "is_user": False, "id": "xZTN4XqofXeMcXml47Um", "timestamp": 1691499971615, "processing_time": 1252, "metadata": None}),
-        DialogueTurn(**{"message": "regen(", "is_user": True, "id": "8jl7WkqlELsQgcVTSF3G", "timestamp": 1691499977532, "processing_time": None, "metadata": None}),
-        DialogueTurn(**{"message": "I'm so sorry to hear that. Can you tell me a bit more about what's troubling you?", "is_user": False, "id": "6pnFJ6960KCnDdRpfzV9", "timestamp": 1691499979388, "processing_time": 1852, "metadata": None})
+        DialogueTurn(
+            **{"message": "Hello! How has your day been so far?", "is_user": False, "id": "xZTN4XqofXeMcXml47Um",
+               "timestamp": 1691499971615, "processing_time": 1252, "metadata": None}),
+        DialogueTurn(**{"message": "regen(", "is_user": True, "id": "8jl7WkqlELsQgcVTSF3G", "timestamp": 1691499977532,
+                        "processing_time": None, "metadata": None}),
+        DialogueTurn(**{"message": "I'm so sorry to hear that. Can you tell me a bit more about what's troubling you?",
+                        "is_user": False, "id": "6pnFJ6960KCnDdRpfzV9", "timestamp": 1691499979388,
+                        "processing_time": 1852, "metadata": None})
     ]
 
     writer = DialogueCSVWriter()

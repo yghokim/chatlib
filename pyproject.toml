@@ -23,6 +23,7 @@ torch = "^2.2.0"
 stringcase = "^1.2.0"
 mistralai = "^0.0.12"
 requests = "^2.31.0"
+dacite = "^1.8.1"
 
 
 [build-system]

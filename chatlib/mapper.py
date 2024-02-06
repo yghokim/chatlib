@@ -4,15 +4,14 @@ from itertools import chain
 from json import JSONDecodeError
 from typing import TypeVar, Generic, Callable
 
-from chatlib.chat_completion import ChatCompletionMessage, ChatCompletionMessageRole
-from chatlib.jinja_utils import convert_to_jinja_template
 from jinja2 import Template
 
-from chatlib.chatbot.generators import ChatGPTResponseGenerator
-
+from chatlib.chat_completion_api import ChatCompletionMessage, ChatCompletionMessageRole
 from chatlib.chatbot import DialogueTurn, Dialogue, RegenerateRequestException, TokenLimitExceedHandler, \
     ChatCompletionParams
-from chatlib.integration.openai_utils import ChatGPTModel
+from chatlib.chatbot.generators import ChatGPTResponseGenerator
+from chatlib.integration.openai_api import ChatGPTModel
+from chatlib.jinja_utils import convert_to_jinja_template
 
 InputType = TypeVar('InputType')
 OutputType = TypeVar('OutputType')
@@ -100,7 +99,8 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatGPTFewShotParamsTyp
         """
         pass
 
-    def __get_example_messages(self, params: ChatGPTFewShotParamsType | None = None) -> list[ChatCompletionMessage] | None:
+    def __get_example_messages(self, params: ChatGPTFewShotParamsType | None = None) -> list[
+                                                                                            ChatCompletionMessage] | None:
         if self.__examples is not None:
             if self.__example_messages_cache is None:
                 self.__example_messages_cache = list(chain.from_iterable([[

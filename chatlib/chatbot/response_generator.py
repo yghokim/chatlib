@@ -9,7 +9,8 @@ from jinja2 import Template
 
 from .types import Dialogue, RegenerateRequestException
 from .. import dict_utils
-from ..chat_completion import ChatCompletionMessage, ChatCompletionAPI, ChatCompletionMessageRole, TokenLimitExceedError
+from ..chat_completion_api import ChatCompletionMessage, ChatCompletionAPI, ChatCompletionMessageRole, \
+    TokenLimitExceedError, ChatCompletionFinishReason, ChatCompletionResult
 from ..message_transformer import MessageTransformerChain, run_message_transformer_chain, \
     SpecialTokenListExtractionTransformer
 
@@ -64,7 +65,6 @@ class ResponseGenerator(ABC):
 ##################
 
 TokenLimitExceedHandler: TypeAlias = Callable[[Dialogue, list[ChatCompletionMessage]], Awaitable[Any]]
-
 
 
 class ChatCompletionFunctionParameterProperty(TypedDict):
@@ -183,11 +183,6 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
             self.__instruction_parameters = params
         self.__resolve_instruction()
 
-    async def retrieve_response_with_function_result(self, function_name: str, messages: list[ChatCompletionMessage],
-                                                     function_messages: list[ChatCompletionMessage],
-                                                     function_call_result: str) -> any:
-        return await self.__api.run_chat_completion(self.model, messages + function_messages, self.__params.to_dict())
-
     async def _get_response_impl(self, dialog: Dialogue, dry: bool = False) -> tuple[str, dict | None]:
         dialogue_converted: list[ChatCompletionMessage] = []
         for turn in dialog:
@@ -216,6 +211,7 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
         else:
             messages = dialogue_converted
 
+        result: ChatCompletionResult
         if self.__api.is_messages_within_token_limit(messages, self.model, self.__token_limit_tolerance):
             result = await self.__api.run_chat_completion(self.model, messages, self.__params.to_dict())
         else:
@@ -225,35 +221,34 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
             else:
                 raise TokenLimitExceedError()
 
-        top_choice = result["choices"][0]
-
         base_metadata = {"chatcompletion": {
-            "usage": dict(**result["usage"]),
-            "model": result["model"],
-            "raw_response_metadata": dict_utils.get_nested_value(result, "raw_response_metadata")
+            "provider": result.provider,
+            "model": result.model,
+            "usage": {"prompt_tokens": result.prompt_tokens, "completion_tokens": result.completion_tokens,
+                      "total_tokens": result.total_tokens}
         }}
 
-        if top_choice["finish_reason"] == 'stop':
-            response_text = top_choice["message"]["content"]
+        if result.finish_reason == ChatCompletionFinishReason.Stop:
+            response_text = result.message.content
             return response_text, base_metadata
-        elif top_choice["finish_reason"] == 'function_call':
-            function_call_info = top_choice["message"]["function_call"]
-            function_name = function_call_info["name"]
-            function_args = json.loads(function_call_info["arguments"])
+        elif result.finish_reason == ChatCompletionFinishReason.Tool:
 
-            if self.verbose: print(f"Call function - {function_name} ({function_args})")
+            function_messages = [result.message]
+            for tool_call in result.message.tool_calls:
+                function_name = tool_call.function.name
+                function_args = json.loads(tool_call.function.arguments)
 
-            function_call_result = await self.function_handler(function_name, function_args)
-            function_turn = ChatCompletionMessage(function_call_result, ChatCompletionMessageRole.FUNCTION,
-                                                  name=function_name)
-            function_messages = [top_choice["message"], function_turn]
+                if self.verbose: print(f"Call function - {function_name} ({function_args})")
 
-            new_result = await self.retrieve_response_with_function_result(function_name, messages, function_messages,
-                                                                           function_call_result)
+                function_call_result = await self.function_handler(function_name, function_args)
+                function_turn = ChatCompletionMessage(function_call_result, ChatCompletionMessageRole.FUNCTION,
+                                                      name=function_name)
+                function_messages.append(function_turn)
 
-            top_choice = new_result.choices[0]
-            if top_choice["finish_reason"] == 'stop':
-                response_text = top_choice["message"]["content"]
+            new_result = await self.__api.run_chat_completion(self.model, messages + function_messages, self.__params.to_dict())
+
+            if new_result.finish_reason == ChatCompletionFinishReason.Stop:
+                response_text = new_result.message.content
                 return response_text, dict_utils.set_nested_value(base_metadata,
                                                                   ["chatcompletion", "function_messages"],
                                                                   function_messages)
@@ -261,7 +256,7 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
                 print("Shouldn't reach here")
 
         else:
-            raise Exception(f"ChatGPT error - {top_choice['finish_reason']}")
+            raise Exception(f"ChatCompletion error - {result.finish_reason}")
 
     def write_to_json(self, parcel: dict):
         parcel["model"] = self.model
@@ -279,4 +274,3 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
         self.__instruction_parameters = parcel["instruction_parameters"]
         self.verbose = parcel["verbose"]
         self.__resolve_instruction()
-

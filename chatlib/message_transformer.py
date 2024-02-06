@@ -1,6 +1,5 @@
 import re
 from abc import ABC, abstractmethod
-from functools import reduce
 from re import Pattern
 from typing import TypeAlias, Callable
 
@@ -28,7 +27,8 @@ MessageTransformerChain: TypeAlias = list[MessageTransformer]
 
 class SpecialTokenExtractionTransformer(MessageTransformer):
 
-    def __init__(self, name: str, token: str | Pattern, onTokenFound: Callable[[str, dict|None], tuple[str, dict | None]] | None = None):
+    def __init__(self, name: str, token: str | Pattern,
+                 onTokenFound: Callable[[str, dict | None], tuple[str, dict | None]] | None = None):
         super().__init__(name)
         self.token = token
         self.onTokenFound = onTokenFound
@@ -48,11 +48,13 @@ class SpecialTokenExtractionTransformer(MessageTransformer):
         return cleaned_message or message, metadata, cleaned_message is not None
 
     @classmethod
-    def remove_all_regex(cls, name: str, pattern: str | Pattern)->'SpecialTokenExtractionTransformer':
+    def remove_all_regex(cls, name: str, pattern: str | Pattern) -> 'SpecialTokenExtractionTransformer':
         return SpecialTokenExtractionTransformer(name, re.compile(pattern), None)
 
+
 class SpecialTokenListExtractionTransformer(MessageTransformer):
-    def __init__(self, name: str, tokens: list[str], onTokenFound: Callable[[list[str], str, str, dict|None], tuple[str, dict | None]] | None = None):
+    def __init__(self, name: str, tokens: list[str],
+                 onTokenFound: Callable[[list[str], str, str, dict | None], tuple[str, dict | None]] | None = None):
         super().__init__(name)
         self.tokens = tokens
         self.onTokenFound = onTokenFound
@@ -71,7 +73,9 @@ class SpecialTokenListExtractionTransformer(MessageTransformer):
 
         return cleaned_message, metadata, len(found_tokens) > 0
 
-def run_message_transformer_chain(message: str, metadata: dict | None, chain: MessageTransformerChain) -> tuple[str, dict | None]:
+
+def run_message_transformer_chain(message: str, metadata: dict | None, chain: MessageTransformerChain) -> tuple[
+    str, dict | None]:
     cleaned_message = message
     m = metadata
     for t in chain:

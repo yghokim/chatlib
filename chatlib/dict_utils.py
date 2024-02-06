@@ -1,4 +1,4 @@
-def set_nested_value(d: dict | None, key: list[str] | str, value)->dict:
+def set_nested_value(d: dict | None, key: list[str] | str, value) -> dict:
     if d is None:
         d = dict()
 
@@ -11,6 +11,7 @@ def set_nested_value(d: dict | None, key: list[str] | str, value)->dict:
                 if top_key not in dictionary or dictionary[top_key] is None:
                     dictionary[top_key] = dict()
                 recur(dictionary[top_key], keys[1:], value)
+
         recur(d, key, value)
     else:
         d[key] = value

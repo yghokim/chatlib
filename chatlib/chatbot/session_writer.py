@@ -11,7 +11,7 @@ from .types import DialogueTurn, Dialogue
 class SessionWriterBase(ABC):
 
     @abstractmethod
-    def exists(self, session_id: str)->bool:
+    def exists(self, session_id: str) -> bool:
         pass
 
     @abstractmethod
@@ -19,7 +19,7 @@ class SessionWriterBase(ABC):
         pass
 
     @abstractmethod
-    def delete_turn(self, session_id: str, turn_id: str)->DialogueTurn | None:
+    def delete_turn(self, session_id: str, turn_id: str) -> DialogueTurn | None:
         pass
 
     @abstractmethod
@@ -76,7 +76,6 @@ class SessionFileWriter(SessionWriterBase):
     def write_turn(self, session_id: str, turn: DialogueTurn):
         with jsonlines.open(self.__get_dialogue_file_path(session_id, True), 'a') as writer:
             writer.write(turn.__dict__)
-
 
     def delete_turn(self, session_id: str, turn_id: str) -> DialogueTurn | None:
         dialogue = self.read_dialogue(session_id)

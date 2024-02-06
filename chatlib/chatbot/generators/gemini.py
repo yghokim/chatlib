@@ -1,9 +1,9 @@
 from functools import cache
-from typing import Callable, Awaitable, Any
+from typing import Any
 
 from jinja2 import Template
 
-from chatlib.chat_completion import ChatCompletionAPI, ChatCompletionMessage
+from chatlib.chat_completion_api import ChatCompletionMessage
 from chatlib.chatbot import ChatCompletionResponseGenerator, ChatCompletionParams, TokenLimitExceedHandler
 from chatlib.integration.gemini_api import GeminiAPI
 

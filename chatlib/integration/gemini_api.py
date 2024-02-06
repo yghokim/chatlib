@@ -1,18 +1,14 @@
-from dataclasses import dataclass
 from enum import StrEnum
 from functools import cache
 from typing import Any
 
+import google.generativeai as genai
 from google.ai.generativelanguage_v1 import Candidate
 from google.generativeai.types import GenerateContentResponse
 
-from chatlib import env_helper
-from chatlib.chat_completion import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionMessageRole, \
+from chatlib.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionMessageRole, \
     APIAuthorizationVariableSpec, APIAuthorizationVariableType
-
-import google.generativeai as genai
-
-from chatlib.chatbot import RegenerateRequestException
+from chatlib.chat_completion_api import ChatCompletionResult
 
 # https://ai.google.dev/tutorials/python_quickstart
 # https://github.com/google/generative-ai-python/blob/main/google/generativeai/generative_models.py#L382-L423
@@ -53,10 +49,17 @@ def convert_to_gemini_messages(messages: list[ChatCompletionMessage]) -> list[di
 
 
 def convert_candidate_to_choice(candidate: Candidate) -> dict:
+
+    role = None
+    if candidate.content.role == GeminiChatMessageRole.User:
+        role = ChatCompletionMessageRole.USER
+    elif candidate.content.role == GeminiChatMessageRole.Model:
+        role = ChatCompletionMessageRole.ASSISTANT
+
     return {
         "message": {
             "content": candidate.content.parts[0].text,
-            "role": candidate.content.role
+            "role": role
         },
         "token_count": candidate.token_count,
         "finish_reason": "stop" if candidate.finish_reason == 1 else candidate.finish_reason
@@ -64,7 +67,6 @@ def convert_candidate_to_choice(candidate: Candidate) -> dict:
 
 
 class GeminiAPI(ChatCompletionAPI):
-
     __api_key_spec = APIAuthorizationVariableSpec(APIAuthorizationVariableType.ApiKey)
 
     @property
@@ -106,7 +108,8 @@ class GeminiAPI(ChatCompletionAPI):
             )
 
         if len(messages) >= 2:
-            if messages[0].role == ChatCompletionMessageRole.SYSTEM and messages[1].role is ChatCompletionMessageRole.ASSISTANT:
+            if messages[0].role == ChatCompletionMessageRole.SYSTEM and messages[
+                1].role is ChatCompletionMessageRole.ASSISTANT:
                 return messages
             else:
                 return [messages[0]] + [ChatCompletionMessage(self.__injected_initial_system_message,
@@ -116,7 +119,7 @@ class GeminiAPI(ChatCompletionAPI):
                 ChatCompletionMessage(self.__injected_initial_system_message, ChatCompletionMessageRole.ASSISTANT),
                 ChatCompletionMessage("Hi!", ChatCompletionMessageRole.USER)]
 
-    async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict) -> Any:
+    async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict) -> ChatCompletionResult:
         injected_messages = self.__convert_messages(messages)
 
         converted_messages = convert_to_gemini_messages(injected_messages)
@@ -126,11 +129,16 @@ class GeminiAPI(ChatCompletionAPI):
             safety_settings=self.__safety_settings
         )
 
-        converted_choices = [convert_candidate_to_choice(candidate) for candidate in response.candidates]
+        top_choice = convert_candidate_to_choice(response.candidates[0])
 
-        return {"choices": converted_choices,
-                "usage": {}, "model": "gemini pro", "raw_response_metadata": {
-                "safety_ratings": {r.category: r.probability for r in response.prompt_feedback.safety_ratings}}}
+        safety_ratings = {r.category: r.probability for r in response.prompt_feedback.safety_ratings}
+
+        return ChatCompletionResult(
+                message=ChatCompletionMessage.from_dict(top_choice["message"]),
+                finish_reason=top_choice["finish_reason"],
+                provider=self.provider_name,
+                model=model
+            )
 
     def count_token_in_messages(self, messages: list[ChatCompletionMessage], model: str) -> int:
         self.assert_authorize()

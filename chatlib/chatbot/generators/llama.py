@@ -3,9 +3,9 @@ from typing import Callable, Awaitable, Any
 
 from jinja2 import Template
 
-from chatlib.integration.azure_llama2_api import AzureLlama2ChatCompletionAPI
-from chatlib.chat_completion import ChatCompletionMessage
+from chatlib.chat_completion_api import ChatCompletionMessage
 from chatlib.chatbot import ChatCompletionResponseGenerator, TokenLimitExceedHandler, ChatCompletionParams
+from chatlib.integration.azure_llama2_api import AzureLlama2ChatCompletionAPI
 
 
 class Llama2ResponseGenerator(ChatCompletionResponseGenerator):
@@ -22,6 +22,7 @@ class Llama2ResponseGenerator(ChatCompletionResponseGenerator):
                  function_handler: Callable[[str, dict | None], Awaitable[Any]] | None = None,
                  special_tokens: list[tuple[str, str, Any]] | None = None, verbose: bool = False,
                  token_limit_exceed_handler: TokenLimitExceedHandler | None = None, token_limit_tolerance: int = 1024):
-        super().__init__(self.get_api(), "Llama-2-70b-chat-hf", base_instruction, instruction_parameters, initial_user_message,
+        super().__init__(self.get_api(), "Llama-2-70b-chat-hf", base_instruction, instruction_parameters,
+                         initial_user_message,
                          chat_completion_params, function_handler, special_tokens, verbose, token_limit_exceed_handler,
                          token_limit_tolerance)

@@ -1,5 +1,6 @@
-from typing import Any
 import json
+from typing import Any
+
 
 class Serializable:
     def to_dict(self):
@@ -7,6 +8,7 @@ class Serializable:
 
     def to_json(self, indent: int | None = 2) -> str:
         return json.dumps(recur_to_serializable_dict(self.to_dict()), indent=indent)
+
 
 def recur_to_serializable_dict(obj: Any) -> Any:
     if isinstance(obj, dict):

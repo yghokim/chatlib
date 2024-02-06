@@ -1,20 +1,21 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Callable
 
-from .generator import ResponseGenerator
-from .types import Dialogue, DialogueTurn
+from .response_generator import ResponseGenerator
 from .session_writer import SessionWriterBase, session_writer
+from .types import Dialogue, DialogueTurn
 from ..dict_utils import set_nested_value
+
 
 class ChatSessionBase(ABC):
     def __init__(self, id: str,
                  response_generator: ResponseGenerator,
-                 session_writer: SessionWriterBase | None = session_writer
+                 writer: SessionWriterBase | None = session_writer
                  ):
         self.id = id
         self._response_generator = response_generator
         self._dialog: Dialogue = []
-        self._session_writer = session_writer
+        self._session_writer = writer
 
     def __del__(self):
         if self._session_writer is not None:
@@ -22,7 +23,7 @@ class ChatSessionBase(ABC):
             self._session_writer.write_session_info(self.id, self._to_info_dict())
 
     @property
-    def response_generator(self)->ResponseGenerator:
+    def response_generator(self) -> ResponseGenerator:
         return self._response_generator
 
     def load(self) -> bool:
@@ -65,7 +66,7 @@ class ChatSessionBase(ABC):
             self._session_writer.write_turn(self.id, turn)
         self.save()
 
-    def _pop_last_turn(self)->DialogueTurn | None:
+    def _pop_last_turn(self) -> DialogueTurn | None:
         if len(self._dialog) > 0:
             pop = self._dialog.pop()
             if self._session_writer is not None:

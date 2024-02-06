@@ -3,7 +3,7 @@ from typing import Callable, Awaitable, Any
 
 from jinja2 import Template
 
-from chatlib.chat_completion import ChatCompletionMessage
+from chatlib.chat_completion_api import ChatCompletionMessage
 from chatlib.chatbot import TokenLimitExceedHandler, ChatCompletionResponseGenerator, ChatCompletionParams
 from chatlib.integration.openai_api import GPTChatCompletionAPI, ChatGPTModel
 

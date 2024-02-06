@@ -1,19 +1,21 @@
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, asdict
 from enum import StrEnum
-from os import path, getcwd
-import re
-from typing import Optional, Any, Callable
 from functools import cache
+from os import path, getcwd
+from typing import Optional, Any, Callable
+
+from dacite import from_dict, Config
+
+from dotenv import find_dotenv, set_key
 from questionary import prompt
 from stringcase import constcase
 
 from chatlib import env_helper
-
-from dotenv import find_dotenv, set_key
-
 from global_config import GlobalConfig
 
+dacite_config = Config(cast=[StrEnum])
 
 class ChatCompletionMessageRole(StrEnum):
     USER = "user"
@@ -23,14 +25,54 @@ class ChatCompletionMessageRole(StrEnum):
 
 
 @dataclass(frozen=True)
+class ChatCompletionFunction:
+    name: str
+    arguments: str
+
+
+@dataclass(frozen=True)
+class ChatCompletionToolCall:
+    index: int
+    id: str
+    function: ChatCompletionFunction
+    type: str = "function"
+
+
+@dataclass(frozen=True)
 class ChatCompletionMessage:
-    content: str
+    content: str | None
+
     role: ChatCompletionMessageRole
     name: Optional[str] = None
+    tool_calls: list[ChatCompletionToolCall] | None = None
 
     @cache
     def to_dict(self) -> dict:
         return {k: v for k, v in asdict(self).items() if v is not None}
+
+    @classmethod
+    def from_dict(cls, obj: dict) -> 'ChatCompletionMessage':
+        return from_dict(data_class=cls, data=obj, config=dacite_config)
+
+
+class ChatCompletionFinishReason(StrEnum):
+    Stop = "stop"
+    Length = "length"
+    Tool = "tool_calls"
+    ContentFilter = "content_filter"
+
+
+@dataclass(frozen=True)
+class ChatCompletionResult:
+    message: ChatCompletionMessage
+    finish_reason: ChatCompletionFinishReason
+
+    provider: str
+    model: str
+
+    completion_tokens: int | None = None
+    prompt_tokens: int | None = None
+    total_tokens: int | None = None
 
 
 class APIAuthorizationVariableType(StrEnum):
@@ -144,12 +186,12 @@ class ChatCompletionAPI(ABC):
 
     @abstractmethod
     async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage],
-                                        params: dict) -> Any:
+                                        params: dict) -> ChatCompletionResult:
         pass
 
     async def run_chat_completion(self, model: str, messages: list[ChatCompletionMessage],
                                   params: dict,
-                                  trial_count: int = 5) -> Any:
+                                  trial_count: int = 5) -> ChatCompletionResult | None:
         self.assert_authorize()
         trial = 0
         result = None
@@ -162,7 +204,6 @@ class ChatCompletionAPI(ABC):
                 print(f"Retry chat completion of {self.provider_name} - {e.caused_by}")
 
         return result
-
 
     @abstractmethod
     def count_token_in_messages(self, messages: list[ChatCompletionMessage], model: str) -> int:

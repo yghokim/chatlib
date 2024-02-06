@@ -3,10 +3,11 @@ from asyncio import to_thread
 from enum import StrEnum
 from functools import cache
 from typing import Any
+
 import requests
 
-from chatlib.chat_completion import ChatCompletionAPI, ChatCompletionMessage, APIAuthorizationVariableSpec, \
-    APIAuthorizationVariableType
+from chatlib.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, APIAuthorizationVariableSpec, \
+    APIAuthorizationVariableType, ChatCompletionResult
 
 
 class TogetherAIModels(StrEnum):
@@ -14,13 +15,12 @@ class TogetherAIModels(StrEnum):
 
 
 class TogetherAPI(ChatCompletionAPI):
-
     __ENDPOINT = "https://api.together.xyz/v1/chat/completions"
 
     __api_key_spec = APIAuthorizationVariableSpec(APIAuthorizationVariableType.ApiKey)
 
     def __init__(self):
-        self.__api_key : str | None = None
+        self.__api_key: str | None = None
 
     @property
     @cache
@@ -56,7 +56,14 @@ class TogetherAPI(ChatCompletionAPI):
 
         response = await to_thread(requests.post, url=self.__ENDPOINT, json=body, headers=headers, data=None)
         if response.status_code == 200:
-            return json.loads(response.text)
+            json_response = json.loads(response.text)
+            return ChatCompletionResult(
+                message=ChatCompletionMessage.from_dict(json_response["choices"][0]["message"]),
+                finish_reason=json_response["choices"][0]["finish_reason"],
+                provider=self.provider_name,
+                model=json_response["model"],
+                **json_response["usage"]
+            )
         else:
             raise Exception(response.status_code, response.reason)
 

@@ -3,7 +3,7 @@ from typing import TypeVar, Generic
 
 from chatlib import dict_utils
 from chatlib.chatbot import ResponseGenerator, Dialogue
-from chatlib.message_transformer import MessageTransformerChain, run_message_transformer_chain
+from chatlib.message_transformer import MessageTransformerChain
 
 StateType = TypeVar('StateType')
 
@@ -61,7 +61,7 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
         pass
 
     async def _get_response_impl(self, dialog: Dialogue, dry: bool = False) -> tuple[str, dict | None]:
-        if dry is False: # Update state only when the dry flag is False.
+        if dry is False:  # Update state only when the dry flag is False.
             # Calculate state and update response generator if the state was changed:
             next_state, next_state_payload = await self.calc_next_state_info(self.current_state, dialog) or (None, None)
             if next_state is not None:
@@ -71,7 +71,8 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
                 self.__current_generator = self.get_generator(self.current_state, self.current_state_payload)
                 if self.verbose:
                     print(
-                        "▤▤▤▤▤▤▤▤▤▤▤▤ State transition from {} to {} ▤▤▤▤▤▤▤▤▤▤▤▤▤".format(pre_state, self.current_state))
+                        "▤▤▤▤▤▤▤▤▤▤▤▤ State transition from {} to {} ▤▤▤▤▤▤▤▤▤▤▤▤▤".format(pre_state,
+                                                                                           self.current_state))
             elif next_state_payload is not None:  # No state change but generator update.
                 print("Update generator with payload.")
                 self._push_new_state(self.current_state, next_state_payload)
@@ -143,6 +144,5 @@ class StateBasedResponseGenerator(ResponseGenerator, Generic[StateType], ABC):
 
         self.__current_generator = self.get_generator(self.current_state, self.__state_history[pointer][1])
         if pointer < len(self.__state_history) - 1:
-            for i in range(pointer+1, len(self.__state_history)):
+            for i in range(pointer + 1, len(self.__state_history)):
                 self.update_generator(self.__current_generator, self.__state_history[i][1])
-

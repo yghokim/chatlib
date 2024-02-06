@@ -1,16 +1,18 @@
 # https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-llama?tabs=azure-studio
+import json
 from asyncio import to_thread
 from enum import StrEnum
 from functools import cache
+from http import HTTPStatus
 from http.client import HTTPResponse
 from typing import Any
 from urllib import request, error, parse
-import json
+
 from transformers import AutoTokenizer
 
-from chatlib import env_helper
-from chatlib.chat_completion import ChatCompletionAPI, ChatCompletionMessage, TokenLimitExceedError, \
-    APIAuthorizationVariableSpec, APIAuthorizationVariableType, ChatCompletionRetryRequestedException
+from chatlib.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, TokenLimitExceedError, \
+    APIAuthorizationVariableSpec, APIAuthorizationVariableType, ChatCompletionRetryRequestedException, \
+    ChatCompletionResult
 
 
 class AzureLlama2Environment:
@@ -95,10 +97,19 @@ class AzureLlama2ChatCompletionAPI(ChatCompletionAPI):
             **params
         })), AzureLlama2Environment.get_request_headers(), method="POST")
 
-        response: HTTPResponse | None = None
         try:
-            response = await to_thread(request.urlopen, url=req)
-            return None if response is None else json.loads(response.read())
+            response: HTTPResponse = await to_thread(request.urlopen, url=req)
+            if response.status == HTTPStatus.OK:
+                json_response = json.loads(response.read())
+                return ChatCompletionResult(
+                    message=ChatCompletionMessage.from_dict(json_response["choices"][0]["message"]),
+                    finish_reason=json_response["choices"][0]["finish_reason"],
+                    provider=self.provider_name,
+                    model=json_response["model"],
+                    **json_response["usage"]
+                )
+            else:
+                raise ChatCompletionRetryRequestedException()
         except (error.HTTPError, TokenLimitExceedError) as e:
             raise ChatCompletionRetryRequestedException(e) from e
 
