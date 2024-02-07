@@ -10,8 +10,9 @@ from chatlib.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage
     APIAuthorizationVariableType, ChatCompletionResult
 
 
-class TogetherAIModels(StrEnum):
+class TogetherAIModel(StrEnum):
     Mixtral8x7BInstruct = "mistralai/Mixtral-8x7B-Instruct-v0.1"
+    Vicuna13B1_5 = "lmsys/vicuna-13b-v1.5"
 
 
 class TogetherAPI(ChatCompletionAPI):

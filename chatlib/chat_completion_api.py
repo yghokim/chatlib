@@ -21,7 +21,7 @@ class ChatCompletionMessageRole(StrEnum):
     USER = "user"
     SYSTEM = "system"
     ASSISTANT = "assistant"
-    FUNCTION = "function"
+    TOOL = "tool"
 
 
 @dataclass(frozen=True)
@@ -44,6 +44,7 @@ class ChatCompletionMessage:
 
     role: ChatCompletionMessageRole
     name: Optional[str] = None
+    tool_call_id: Optional[str] = None
     tool_calls: list[ChatCompletionToolCall] | None = None
 
     @cache

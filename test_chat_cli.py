@@ -6,39 +6,41 @@ from chatlib import cli
 from chatlib.chatbot.generators import ChatGPTResponseGenerator
 from chatlib.chatbot.generators.gemini import GeminiResponseGenerator
 from chatlib.chatbot.generators.llama import Llama2ResponseGenerator
-from chatlib.chatbot.generators.mixtral import MixtralResponseGenerator
+from chatlib.chatbot.generators.together import TogetherAIResponseGenerator
 from chatlib.integration.openai_api import ChatGPTModel
+from chatlib.integration.together_api import TogetherAIModel
 from global_config import GlobalConfig
 
 
+agent_args = dict(
+    base_instruction="You are a helpful assistant that asks the user about their daily activity and feelings. "
+                     "If the user wants to finish the conversation, put special token <|Terminate|> at the end of message.",
+    initial_user_message="Hi!",
+    special_tokens=[("<|Terminate|>", "terminate", True)]
+)
+
 agent_gpt = ChatGPTResponseGenerator(
         model=ChatGPTModel.GPT_4_latest,
-        base_instruction="You are a helpful assistant that asks the user about their daily activity and feelings. "
-                         "Put special token <|Terminate|> at the end of message only if the user wants to finish the conversation.",
-        initial_user_message="Hi!",
-        special_tokens=[("<|Terminate|>", "terminate", True)]
+        **agent_args
     )
 
 agent_llama = Llama2ResponseGenerator(
-        base_instruction="You are a helpful assistant that asks the user about their daily activity and feelings. "
-                         "Put special token <|Terminate|> at the end of message only if the user wants to finish the conversation.",
-        initial_user_message="Hi!",
-        special_tokens=[("<|Terminate|>", "terminate", True)]
+        **agent_args
     )
 
 agent_gemini = GeminiResponseGenerator(
-        base_instruction="You are a helpful assistant that asks the user about their daily activity and feelings. "
-                         "Put special token <|Terminate|> at the end of message only if the user wants to finish the conversation.",
-        initial_user_message="Hi!",
-        special_tokens=[("<|Terminate|>", "terminate", True)]
+        **agent_args
 )
 
 
-agent_mixtral = MixtralResponseGenerator(
-        base_instruction="You are a helpful assistant that asks the user about their daily activity and feelings. "
-                         "Put special token <|Terminate|> at the end of message only if the user wants to finish the conversation.",
-        initial_user_message="Hi!",
-        special_tokens=[("<|Terminate|>", "terminate", True)]
+agent_mixtral = TogetherAIResponseGenerator(
+        model=TogetherAIModel.Mixtral8x7BInstruct,
+        **agent_args
+)
+
+agent_vicuna = TogetherAIResponseGenerator(
+        model=TogetherAIModel.Vicuna13B1_5,
+        **agent_args
 )
 
 
@@ -48,7 +50,7 @@ if __name__ == "__main__":
     answer = prompt([{
         'type': 'select',
         "name": "agent_model",
-        'choices': ['GPT', 'Llama2', 'Gemini', "Mixtral"],
+        'choices': ['GPT', 'Llama2', 'Gemini', "Mixtral", "Vicuna"],
         'message': 'Select model you want to converse with:'
     }])
 
@@ -62,6 +64,8 @@ if __name__ == "__main__":
         agent = agent_gemini
     elif agent_model == 'Mixtral':
         agent = agent_mixtral
+    elif agent_model == 'Vicuna':
+        agent = agent_vicuna
     else:
         raise Exception("Invalid model selected")
 

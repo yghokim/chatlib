@@ -241,8 +241,8 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
                 if self.verbose: print(f"Call function - {function_name} ({function_args})")
 
                 function_call_result = await self.function_handler(function_name, function_args)
-                function_turn = ChatCompletionMessage(function_call_result, ChatCompletionMessageRole.FUNCTION,
-                                                      name=function_name)
+                function_turn = ChatCompletionMessage(function_call_result, ChatCompletionMessageRole.TOOL,
+                                                      name=function_name, tool_call_id=tool_call.id)
                 function_messages.append(function_turn)
 
             new_result = await self.__api.run_chat_completion(self.model, messages + function_messages, self.__params.to_dict())
