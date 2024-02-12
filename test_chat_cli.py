@@ -4,6 +4,7 @@ from questionary import prompt
 
 from chatlib import cli
 from chatlib.chatbot.generators import ChatGPTResponseGenerator
+from chatlib.chatbot.generators.claude import ClaudeResponseGenerator
 from chatlib.chatbot.generators.gemini import GeminiResponseGenerator
 from chatlib.chatbot.generators.llama import Llama2ResponseGenerator
 from chatlib.chatbot.generators.together import TogetherAIResponseGenerator
@@ -43,6 +44,8 @@ agent_vicuna = TogetherAIResponseGenerator(
         **agent_args
 )
 
+agent_claude = ClaudeResponseGenerator(**agent_args)
+
 
 if __name__ == "__main__":
     GlobalConfig.is_cli_mode = True
@@ -50,7 +53,7 @@ if __name__ == "__main__":
     answer = prompt([{
         'type': 'select',
         "name": "agent_model",
-        'choices': ['GPT', 'Llama2', 'Gemini', "Mixtral", "Vicuna"],
+        'choices': ['GPT', 'Llama2', 'Gemini', "Mixtral", "Vicuna", "Claude"],
         'message': 'Select model you want to converse with:'
     }])
 
@@ -66,6 +69,8 @@ if __name__ == "__main__":
         agent = agent_mixtral
     elif agent_model == 'Vicuna':
         agent = agent_vicuna
+    elif agent_model == 'Claude':
+        agent = agent_claude
     else:
         raise Exception("Invalid model selected")
 

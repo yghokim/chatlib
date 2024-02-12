@@ -85,8 +85,6 @@ class GeminiAPI(ChatCompletionAPI):
                  safety_settings: list[dict] | None = None,
                  injected_initial_system_message: str = "Okay I will diligently follow that instruction."):
         super().__init__()
-        self.__model: genai.GenerativeModel | None = None
-        self.__chat_model: genai.ChatSession | None = None
         self.__injected_initial_system_message = injected_initial_system_message
         self.__safety_settings = safety_settings or _SAFETY_SETTINGS_BLOCK_NONE
 
