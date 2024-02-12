@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "chatlib"
-version = "0.6.2"
+version = "0.6.3"
 description = "A generalizable Python Chatbot Library"
 authors = ["Young-Ho Kim <yghokim@younghokim.net>"]
 license = "MIT"
@@ -21,7 +21,6 @@ questionary = "^2.0.1"
 google-generativeai = "^0.3.2"
 torch = "^2.2.0"
 stringcase = "^1.2.0"
-mistralai = "^0.0.12"
 requests = "^2.31.0"
 dacite = "^1.8.1"
 
