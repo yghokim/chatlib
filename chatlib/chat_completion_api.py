@@ -171,11 +171,11 @@ class ChatCompletionAPI(ABC):
 
         answers = prompt(questions)
 
-        env_file = find_dotenv()
+        env_file = find_dotenv(usecwd=True)
         if not path.exists(env_file):
             env_file = open(path.join(getcwd(), '.env'), 'w', encoding='utf-8')
             env_file.close()
-            env_file = find_dotenv()
+            env_file = find_dotenv(usecwd=True)
 
         for env_key, env_value in answers.items():
             set_key(env_file, env_key, env_value)

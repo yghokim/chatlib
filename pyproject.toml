@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "chatlib"
-version = "0.6.4"
+version = "0.6.5"
 description = "A generalizable Python Chatbot Library"
 authors = ["Young-Ho Kim <yghokim@younghokim.net>"]
 license = "MIT"

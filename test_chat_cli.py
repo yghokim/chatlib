@@ -9,7 +9,7 @@ from chatlib.chatbot.generators.llama import Llama2ResponseGenerator
 from chatlib.chatbot.generators.together import TogetherAIResponseGenerator
 from chatlib.integration.openai_api import ChatGPTModel
 from chatlib.integration.together_api import TogetherAIModel
-from global_config import GlobalConfig
+from chatlib.global_config import GlobalConfig
 
 
 agent_args = dict(
