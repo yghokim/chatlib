@@ -13,7 +13,7 @@ from questionary import prompt
 from stringcase import constcase
 
 from chatlib import env_helper
-from global_config import GlobalConfig
+from chatlib.global_config import GlobalConfig
 
 dacite_config = Config(cast=[StrEnum])
 
