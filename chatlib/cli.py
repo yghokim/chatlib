@@ -2,9 +2,12 @@ import asyncio
 from os import getcwd, path
 from typing import Callable, TypeAlias, Awaitable
 
+import questionary
+
 from nanoid import generate as generate_id
 from yaspin import yaspin
 
+from chatlib.chat_completion_api import make_non_empty_string_validator
 from chatlib.chatbot import ResponseGenerator, TurnTakingChatSession, DialogueTurn, MultiAgentChatSession
 
 CommandDef: TypeAlias = tuple[list[str] | str, Callable[[TurnTakingChatSession], None | Awaitable]]
@@ -25,7 +28,7 @@ DEFAULT_TEST_COMMANDS = [
 
 def __turn_to_string(turn: DialogueTurn) -> str:
     if turn.is_user:
-        return f"<User> {turn.message}"
+        return f"<You> {turn.message}"
     else:
         return f"<AI> {turn.message} ({turn.metadata.__str__() if turn.metadata is not None else None}) - {turn.processing_time} sec"
 
@@ -49,15 +52,16 @@ async def run_chat_loop_from_session(session: TurnTakingChatSession, initialize:
         spinner.start()
         system_turn = await session.initialize()
         spinner.stop()
-        print(__turn_to_string(system_turn))  # Print initial message
+        questionary.print(__turn_to_string(system_turn))  # Print initial message
     elif len(session.dialog) > 0:
         for turn in session.dialog:
-            print(__turn_to_string(turn))
+            questionary.print(__turn_to_string(turn))
 
-        print("========Continue chat==========")
+        questionary.print("========Continue chat==========")
 
     while True:
-        user_message = input("You: ").strip()
+        user_message = await questionary.text("<You>", validate=make_non_empty_string_validator("A message should not be empty.")).ask_async()
+
 
         matched_command_actions = [action for cmd, action in commands if (user_message.lower() == cmd if isinstance(cmd,
                                                                                                                     str) else user_message.lower() in cmd)] if commands is not None else []
@@ -74,7 +78,7 @@ async def run_chat_loop_from_session(session: TurnTakingChatSession, initialize:
             spinner.start()
             system_turn = await session.push_user_message(DialogueTurn(user_message, is_user=True))
             spinner.stop()
-            print(__turn_to_string(system_turn))
+            questionary.print(__turn_to_string(system_turn))
 
 
 async def run_auto_chat_loop(agent_generator: ResponseGenerator, user_generator: ResponseGenerator,
