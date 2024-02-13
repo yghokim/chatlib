@@ -31,7 +31,7 @@ def create_anthropic_prompt(messages: list[ChatCompletionMessage]) -> str:
         return f"{AI_PROMPT}"
 
 
-def convert_anthropic_stop_reason(reason: str) -> ChatCompletionFinishReason:
+def convert_anthropic_stop_reason(reason: str | Literal["end_turn", "max_tokens", "stop_sequence"]) -> ChatCompletionFinishReason:
     if reason == "end_turn":
         return ChatCompletionFinishReason.Stop
     elif reason == 'max_tokens':
@@ -42,6 +42,7 @@ def convert_anthropic_stop_reason(reason: str) -> ChatCompletionFinishReason:
 
 class AnthropicModels(StrEnum):
     CLAUDE_21 = "claude-2.1"
+
 
 # https://docs.anthropic.com/claude/reference/messages_post
 
@@ -76,17 +77,28 @@ class AnthropicChatCompletionAPI(ChatCompletionAPI):
 
     async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage],
                                         params: dict) -> ChatCompletionResult:
-        completion_result = self.__client.completions.create(model=model,
-                                                             prompt=create_anthropic_prompt(messages),
-                                                             **params,
-                                                             max_tokens_to_sample=1000
-                                                             )
+        if len(messages) > 0 and messages[0].role is ChatCompletionMessageRole.SYSTEM:
+            # Exists system prompt
+            system_prompt = messages[0].content
+            messages = messages[1:]
+        else:
+            system_prompt = None
+
+        completion_result = self.__client.beta.messages.create(model=model,
+                                                               system=system_prompt if system_prompt is not None else None,
+                                                               messages=[msg.to_dict() for msg in messages],
+                                                               max_tokens=1024,
+                                                               **params,
+                                                               )
 
         return ChatCompletionResult(
-            message=ChatCompletionMessage(completion_result.completion, role=ChatCompletionMessageRole.ASSISTANT),
-            finish_reason=convert_anthropic_stop_reason(completion_result.stop_reason),
+            message=ChatCompletionMessage(completion_result.content[0].text, role=ChatCompletionMessageRole.ASSISTANT),
+            finish_reason=convert_anthropic_stop_reason(completion_result.stop_reason) if completion_result.stop_reason is not None else ChatCompletionFinishReason.Stop,
             model=model,
-            provider=self.provider_name
+            provider=self.provider_name,
+            prompt_tokens=completion_result.usage.input_tokens,
+            completion_tokens=completion_result.usage.output_tokens,
+            total_tokens=completion_result.usage.input_tokens + completion_result.usage.output_tokens
         )
 
     def count_token_in_messages(self, messages: list[ChatCompletionMessage], model: str) -> int:
