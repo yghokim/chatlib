@@ -40,36 +40,33 @@ def convert_anthropic_stop_reason(reason: str | Literal["end_turn", "max_tokens"
         return ChatCompletionFinishReason.Stop
 
 
-class AnthropicModels(StrEnum):
+class AnthropicModel(StrEnum):
     CLAUDE_21 = "claude-2.1"
 
 
 # https://docs.anthropic.com/claude/reference/messages_post
 
 class AnthropicChatCompletionAPI(ChatCompletionAPI):
-    def __init__(self):
-        super().__init__()
-        self.__client: Client | None = None
 
     __api_key_spec = APIAuthorizationVariableSpec(APIAuthorizationVariableType.ApiKey)
 
-    @property
+    @classmethod
     @cache
-    def provider_name(self) -> str:
+    def provider_name(cls) -> str:
         return "Anthropic"
 
-    def get_auth_variable_specs(self) -> list[APIAuthorizationVariableSpec]:
-        return [self.__api_key_spec]
+    @classmethod
+    def get_auth_variable_specs(cls) -> list[APIAuthorizationVariableSpec]:
+        return [cls.__api_key_spec]
 
-    def _authorize_impl(self, variables: dict[APIAuthorizationVariableSpec, Any]) -> bool:
-        if variables[self.__api_key_spec] is not None and len(variables[self.__api_key_spec]) > 0:
-            if self.__client is not None:
-                self.__client.api_key = variables[self.__api_key_spec]
-            else:
-                self.__client = Anthropic(api_key=variables[self.__api_key_spec])
-            return True
-        else:
-            return False
+    @classmethod
+    def _authorize_impl(cls, variables: dict[APIAuthorizationVariableSpec, Any]) -> bool:
+        return True
+
+    @property
+    def __client(self) -> Client:
+        return Anthropic(api_key=self.get_auth_variable_for_spec(self.__api_key_spec))
+
 
     def is_messages_within_token_limit(self, messages: list[ChatCompletionMessage], model: str,
                                        tolerance: int = 120) -> bool:
@@ -95,7 +92,7 @@ class AnthropicChatCompletionAPI(ChatCompletionAPI):
             message=ChatCompletionMessage(completion_result.content[0].text, role=ChatCompletionMessageRole.ASSISTANT),
             finish_reason=convert_anthropic_stop_reason(completion_result.stop_reason) if completion_result.stop_reason is not None else ChatCompletionFinishReason.Stop,
             model=model,
-            provider=self.provider_name,
+            provider=self.provider_name(),
             prompt_tokens=completion_result.usage.input_tokens,
             completion_tokens=completion_result.usage.output_tokens,
             total_tokens=completion_result.usage.input_tokens + completion_result.usage.output_tokens

@@ -69,16 +69,18 @@ def convert_candidate_to_choice(candidate: Candidate) -> dict:
 class GeminiAPI(ChatCompletionAPI):
     __api_key_spec = APIAuthorizationVariableSpec(APIAuthorizationVariableType.ApiKey)
 
-    @property
+    @classmethod
     @cache
-    def provider_name(self) -> str:
+    def provider_name(cls) -> str:
         return "Google"
 
-    def get_auth_variable_specs(self) -> list[APIAuthorizationVariableSpec]:
-        return [self.__api_key_spec]
+    @classmethod
+    def get_auth_variable_specs(cls) -> list[APIAuthorizationVariableSpec]:
+        return [cls.__api_key_spec]
 
-    def _authorize_impl(self, variables: dict[APIAuthorizationVariableSpec, Any]) -> bool:
-        genai.configure(api_key=variables[self.__api_key_spec])
+    @classmethod
+    def _authorize_impl(cls, variables: dict[APIAuthorizationVariableSpec, Any]) -> bool:
+        genai.configure(api_key=variables[cls.__api_key_spec])
         return True
 
     def __init__(self,
@@ -134,7 +136,7 @@ class GeminiAPI(ChatCompletionAPI):
         return ChatCompletionResult(
                 message=ChatCompletionMessage.from_dict(top_choice["message"]),
                 finish_reason=top_choice["finish_reason"],
-                provider=self.provider_name,
+                provider=self.provider_name(),
                 model=model
             )
 

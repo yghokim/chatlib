@@ -69,17 +69,19 @@ class AzureLlama2ChatCompletionAPI(ChatCompletionAPI):
     __host_spec = APIAuthorizationVariableSpec(variable_type=APIAuthorizationVariableType.Host)
     __key_spec = APIAuthorizationVariableSpec(variable_type=APIAuthorizationVariableType.Key)
 
-    @property
+    @classmethod
     @cache
-    def provider_name(self) -> str:
+    def provider_name(cls) -> str:
         return "Azure Llama2"
 
-    def get_auth_variable_specs(self) -> list[APIAuthorizationVariableSpec]:
-        return [self.__host_spec, self.__key_spec]
+    @classmethod
+    def get_auth_variable_specs(cls) -> list[APIAuthorizationVariableSpec]:
+        return [cls.__host_spec, cls.__key_spec]
 
-    def _authorize_impl(self, variables: dict[APIAuthorizationVariableSpec, Any]) -> bool:
-        AzureLlama2Environment.set_host(variables[self.__host_spec])
-        AzureLlama2Environment.set_key(variables[self.__key_spec])
+    @classmethod
+    def _authorize_impl(cls, variables: dict[APIAuthorizationVariableSpec, Any]) -> bool:
+        AzureLlama2Environment.set_host(variables[cls.__host_spec])
+        AzureLlama2Environment.set_key(variables[cls.__key_spec])
         return True
 
     @cache
@@ -104,7 +106,7 @@ class AzureLlama2ChatCompletionAPI(ChatCompletionAPI):
                 return ChatCompletionResult(
                     message=ChatCompletionMessage.from_dict(json_response["choices"][0]["message"]),
                     finish_reason=json_response["choices"][0]["finish_reason"],
-                    provider=self.provider_name,
+                    provider=self.provider_name(),
                     model=json_response["model"],
                     **json_response["usage"]
                 )

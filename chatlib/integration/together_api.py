@@ -7,7 +7,7 @@ from typing import Any
 import requests
 
 from chatlib.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, APIAuthorizationVariableSpec, \
-    APIAuthorizationVariableType, ChatCompletionResult
+    APIAuthorizationVariableType, ChatCompletionResult, ChatCompletionFinishReason
 
 
 class TogetherAIModel(StrEnum):
@@ -20,23 +20,18 @@ class TogetherAPI(ChatCompletionAPI):
 
     __api_key_spec = APIAuthorizationVariableSpec(APIAuthorizationVariableType.ApiKey)
 
-    def __init__(self):
-        self.__api_key: str | None = None
-
-    @property
+    @classmethod
     @cache
-    def provider_name(self) -> str:
+    def provider_name(cls) -> str:
         return "Together AI"
 
-    def get_auth_variable_specs(self) -> list[APIAuthorizationVariableSpec]:
-        return [self.__api_key_spec]
+    @classmethod
+    def get_auth_variable_specs(cls) -> list[APIAuthorizationVariableSpec]:
+        return [cls.__api_key_spec]
 
-    def _authorize_impl(self, variables: dict[APIAuthorizationVariableSpec, Any]) -> bool:
-        if self.__api_key_spec in variables and len(variables[self.__api_key_spec]) > 0:
-            self.__api_key = variables[self.__api_key_spec]
-            return True
-        else:
-            return False
+    @classmethod
+    def _authorize_impl(cls, variables: dict[APIAuthorizationVariableSpec, Any]) -> bool:
+        return True
 
     def is_messages_within_token_limit(self, messages: list[ChatCompletionMessage], model: str,
                                        tolerance: int = 120) -> bool:
@@ -46,22 +41,24 @@ class TogetherAPI(ChatCompletionAPI):
         body = {
             "model": model,
             "n": 1,
+            "stream": False,
             "messages": [msg.to_dict() for msg in messages]
         }
 
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
-            "Authorization": f"Bearer {self.__api_key}"
+            "Authorization": f"Bearer {self.get_auth_variable_for_spec(self.__api_key_spec)}"
         }
 
         response = await to_thread(requests.post, url=self.__ENDPOINT, json=body, headers=headers, data=None)
         if response.status_code == 200:
             json_response = json.loads(response.text)
+            print(json_response)
             return ChatCompletionResult(
                 message=ChatCompletionMessage.from_dict(json_response["choices"][0]["message"]),
-                finish_reason=json_response["choices"][0]["finish_reason"],
-                provider=self.provider_name,
+                finish_reason=ChatCompletionFinishReason.Stop,
+                provider=self.provider_name(),
                 model=json_response["model"],
                 **json_response["usage"]
             )

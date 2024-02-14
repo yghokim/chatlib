@@ -17,6 +17,7 @@ from chatlib.global_config import GlobalConfig
 
 dacite_config = Config(cast=[StrEnum])
 
+
 class ChatCompletionMessageRole(StrEnum):
     USER = "user"
     SYSTEM = "system"
@@ -107,63 +108,76 @@ def make_non_empty_string_validator(msg: str) -> Callable:
 
 class ChatCompletionAPI(ABC):
 
-    @property
+    @classmethod
     @abstractmethod
-    def provider_name(self) -> str:
+    def provider_name(cls) -> str:
         pass
 
+    @classmethod
     @abstractmethod
-    def get_auth_variable_specs(self) -> list[APIAuthorizationVariableSpec]:
+    def get_auth_variable_specs(cls) -> list[APIAuthorizationVariableSpec]:
         pass
 
-    def __env_key_for_spec(self, spec: APIAuthorizationVariableSpec) -> str:
-        return re.sub(r'_+', '_', constcase(self.provider_name + "_" + spec.variable_type))
+    @classmethod
+    @cache
+    def env_key_for_spec(cls, spec: APIAuthorizationVariableSpec) -> str:
+        return re.sub(r'_+', '_', constcase(cls.provider_name() + "_" + spec.variable_type))
 
-    def authorize(self) -> bool:
+    @classmethod
+    @cache
+    def get_auth_variable_for_spec(cls, spec: APIAuthorizationVariableSpec) -> str:
+        return env_helper.get_env_variable(cls.env_key_for_spec(spec))
+
+    @classmethod
+    def authorize(cls) -> bool:
         variables: dict[APIAuthorizationVariableSpec, Any] = {}
-        for spec in self.get_auth_variable_specs():
-            var = env_helper.get_env_variable(self.__env_key_for_spec(spec))
+        for spec in cls.get_auth_variable_specs():
+            var = cls.get_auth_variable_for_spec(spec)
             if var is not None:
                 variables[spec] = var
             else:
+                cls.get_auth_variable_for_spec.cache_clear()
                 return False
 
-        return self._authorize_impl(variables)
+        return cls._authorize_impl(variables)
 
+    @classmethod
     @abstractmethod
-    def _authorize_impl(self, variables: dict[APIAuthorizationVariableSpec, Any]) -> bool:
+    def _authorize_impl(cls, variables: dict[APIAuthorizationVariableSpec, Any]) -> bool:
         pass
 
-    def assert_authorize(self):
-        if self.authorize():
+    @classmethod
+    def assert_authorize(cls):
+        if cls.authorize():
             return
         elif GlobalConfig.is_cli_mode:  # If on a CLI, authorize directly.
-            self._request_auth_variables_cli()
-            self.assert_authorize()
+            cls._request_auth_variables_cli()
+            cls.assert_authorize()
         else:
-            raise ServiceUnauthorizedError(self.provider_name)
+            raise ServiceUnauthorizedError(cls.provider_name())
 
-    def _request_auth_variables_cli(self):
+    @classmethod
+    def _request_auth_variables_cli(cls):
         questions = []
-        for spec in self.get_auth_variable_specs():
+        for spec in cls.get_auth_variable_specs():
             default_question_spec = {
                 "type": 'text',
-                "name": self.__env_key_for_spec(spec)
+                "name": cls.env_key_for_spec(spec)
             }
 
             if spec.variable_type is APIAuthorizationVariableType.ApiKey:
                 default_question_spec.update({
-                    "message": f'Please enter your API key for {self.provider_name}:',
+                    "message": f'Please enter your API key for {cls.provider_name()}:',
                     "validate": make_non_empty_string_validator("Please enter a valid API key.")})
 
             elif spec.variable_type is APIAuthorizationVariableType.Key:
                 default_question_spec.update({
-                    "message": f'Please enter your key for {self.provider_name}:',
+                    "message": f'Please enter your key for {cls.provider_name()}:',
                     "validate": make_non_empty_string_validator("Please enter a valid key.")
                 })
             elif spec.variable_type is APIAuthorizationVariableType.Host:
                 default_question_spec.update({
-                    "message": f'Please enter a host address for {self.provider_name}:',
+                    "message": f'Please enter a host address for {cls.provider_name()}:',
                     "validate": make_non_empty_string_validator("Please enter a valid address.")
                 })
 
@@ -179,6 +193,7 @@ class ChatCompletionAPI(ABC):
 
         for env_key, env_value in answers.items():
             set_key(env_file, env_key, env_value)
+        cls.get_auth_variable_for_spec.cache_clear()
 
     @abstractmethod
     def is_messages_within_token_limit(self, messages: list[ChatCompletionMessage], model: str,
