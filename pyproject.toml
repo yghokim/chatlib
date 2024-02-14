@@ -24,6 +24,7 @@ stringcase = "^1.2.0"
 requests = "^2.31.0"
 dacite = "^1.8.1"
 anthropic = "^0.15.1"
+cohere = "^4.47"
 
 
 [build-system]
