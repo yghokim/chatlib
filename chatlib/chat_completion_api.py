@@ -120,22 +120,23 @@ class ChatCompletionAPI(ABC):
 
     @classmethod
     @cache
-    def _env_key_for_spec(cls, spec: APIAuthorizationVariableSpec) -> str:
+    def env_key_for_spec(cls, spec: APIAuthorizationVariableSpec) -> str:
         return re.sub(r'_+', '_', constcase(cls.provider_name() + "_" + spec.variable_type))
 
     @classmethod
     @cache
-    def _get_auth_variable_for_spec(cls, spec: APIAuthorizationVariableSpec) -> str:
-        return env_helper.get_env_variable(cls._env_key_for_spec(spec))
+    def get_auth_variable_for_spec(cls, spec: APIAuthorizationVariableSpec) -> str:
+        return env_helper.get_env_variable(cls.env_key_for_spec(spec))
 
     @classmethod
     def authorize(cls) -> bool:
         variables: dict[APIAuthorizationVariableSpec, Any] = {}
         for spec in cls.get_auth_variable_specs():
-            var = cls._get_auth_variable_for_spec(spec)
+            var = cls.get_auth_variable_for_spec(spec)
             if var is not None:
                 variables[spec] = var
             else:
+                cls.get_auth_variable_for_spec.cache_clear()
                 return False
 
         return cls._authorize_impl(variables)
@@ -153,7 +154,7 @@ class ChatCompletionAPI(ABC):
             cls._request_auth_variables_cli()
             cls.assert_authorize()
         else:
-            raise ServiceUnauthorizedError(cls.provider_name)
+            raise ServiceUnauthorizedError(cls.provider_name())
 
     @classmethod
     def _request_auth_variables_cli(cls):
@@ -161,7 +162,7 @@ class ChatCompletionAPI(ABC):
         for spec in cls.get_auth_variable_specs():
             default_question_spec = {
                 "type": 'text',
-                "name": cls._env_key_for_spec(spec)
+                "name": cls.env_key_for_spec(spec)
             }
 
             if spec.variable_type is APIAuthorizationVariableType.ApiKey:
@@ -192,6 +193,7 @@ class ChatCompletionAPI(ABC):
 
         for env_key, env_value in answers.items():
             set_key(env_file, env_key, env_value)
+        cls.get_auth_variable_for_spec.cache_clear()
 
     @abstractmethod
     def is_messages_within_token_limit(self, messages: list[ChatCompletionMessage], model: str,

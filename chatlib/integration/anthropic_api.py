@@ -40,7 +40,7 @@ def convert_anthropic_stop_reason(reason: str | Literal["end_turn", "max_tokens"
         return ChatCompletionFinishReason.Stop
 
 
-class AnthropicModels(StrEnum):
+class AnthropicModel(StrEnum):
     CLAUDE_21 = "claude-2.1"
 
 
@@ -65,7 +65,7 @@ class AnthropicChatCompletionAPI(ChatCompletionAPI):
 
     @property
     def __client(self) -> Client:
-        return Anthropic(api_key=self._get_auth_variable_for_spec(self.__api_key_spec))
+        return Anthropic(api_key=self.get_auth_variable_for_spec(self.__api_key_spec))
 
 
     def is_messages_within_token_limit(self, messages: list[ChatCompletionMessage], model: str,

@@ -7,7 +7,7 @@ from typing import Any
 import requests
 
 from chatlib.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, APIAuthorizationVariableSpec, \
-    APIAuthorizationVariableType, ChatCompletionResult
+    APIAuthorizationVariableType, ChatCompletionResult, ChatCompletionFinishReason
 
 
 class TogetherAIModel(StrEnum):
@@ -19,7 +19,6 @@ class TogetherAPI(ChatCompletionAPI):
     __ENDPOINT = "https://api.together.xyz/v1/chat/completions"
 
     __api_key_spec = APIAuthorizationVariableSpec(APIAuthorizationVariableType.ApiKey)
-
 
     @classmethod
     @cache
@@ -42,13 +41,14 @@ class TogetherAPI(ChatCompletionAPI):
         body = {
             "model": model,
             "n": 1,
+            "stream": False,
             "messages": [msg.to_dict() for msg in messages]
         }
 
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
-            "Authorization": f"Bearer {self._get_auth_variable_for_spec(self.__api_key_spec)}"
+            "Authorization": f"Bearer {self.get_auth_variable_for_spec(self.__api_key_spec)}"
         }
 
         response = await to_thread(requests.post, url=self.__ENDPOINT, json=body, headers=headers, data=None)
@@ -57,7 +57,7 @@ class TogetherAPI(ChatCompletionAPI):
             print(json_response)
             return ChatCompletionResult(
                 message=ChatCompletionMessage.from_dict(json_response["choices"][0]["message"]),
-                finish_reason=json_response["choices"][0]["finish_reason"],
+                finish_reason=ChatCompletionFinishReason.Stop,
                 provider=self.provider_name(),
                 model=json_response["model"],
                 **json_response["usage"]
