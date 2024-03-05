@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     if agent_a_model == 'GPT4':
         agent_a = ChatGPTResponseGenerator(
-            model=ChatGPTModel.GPT_4_latest,
+            model=ChatGPTModel.GPT_4_TURBO,
             **agent_a_args
         )
     elif agent_a_model == 'Llama2':
@@ -88,10 +88,9 @@ if __name__ == "__main__":
 
     agent_a.get_api().assert_authorize()
 
-
     if agent_b_model == 'GPT4':
         agent_b = ChatGPTResponseGenerator(
-            model=ChatGPTModel.GPT_4_latest,
+            model=ChatGPTModel.GPT_4_TURBO,
             **agent_b_args
         )
     elif agent_b_model == 'Llama2':

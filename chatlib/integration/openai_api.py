@@ -3,11 +3,12 @@ from enum import StrEnum
 from functools import cache
 from typing import Any
 
-import openai
+from openai import AsyncOpenAI
 import tiktoken
 
 from chatlib.chat_completion_api import ChatCompletionMessage, ChatCompletionAPI, APIAuthorizationVariableSpec, \
-    APIAuthorizationVariableType, ChatCompletionRetryRequestedException, ChatCompletionResult
+    APIAuthorizationVariableType, ChatCompletionRetryRequestedException, ChatCompletionResult, \
+    ChatCompletionFinishReason
 
 
 class ChatGPTModel(StrEnum):
@@ -17,6 +18,8 @@ class ChatGPTModel(StrEnum):
     GPT_4_32k_latest = "gpt-4-32k"
     GPT_4_0613 = "gpt-4-0613"
     GPT_3_5_0613 = "gpt-3.5-turbo-0613"
+    GPT_4_TURBO = "gpt-4-turbo-preview"
+    GPT_4_0125 = "gpt-4-0125-preview"
 
 
 def get_token_limit(model: str):
@@ -24,6 +27,10 @@ def get_token_limit(model: str):
         return 32000
     elif model is ChatGPTModel.GPT_3_5_16k_latest:
         return 16000
+    elif model is ChatGPTModel.GPT_4_0125:
+        return 128000
+    elif model.startswith("gpt-4-turbo"):
+        return 128000
     elif model.startswith("gpt-3.5"):
         return 4096
     elif model.startswith("gpt-4"):
@@ -39,40 +46,39 @@ class GPTChatCompletionAPI(ChatCompletionAPI):
     @cache
     def provider_name(self) -> str:
         return "Open AI"
-
     @classmethod
     def get_auth_variable_specs(cls) -> list[APIAuthorizationVariableSpec]:
         return [cls.__api_key_spec]
 
     @classmethod
     def _authorize_impl(cls, variables: dict[APIAuthorizationVariableSpec, Any]) -> bool:
-        openai.api_key = variables[cls.__api_key_spec]
         return True
+
+    @property
+    def __client(self) -> AsyncOpenAI:
+        return AsyncOpenAI(api_key=self.get_auth_variable_for_spec(self.__api_key_spec))
 
     def is_messages_within_token_limit(self, messages: list[ChatCompletionMessage], model: str,
                                        tolerance: int = 120) -> bool:
         return self.count_token_in_messages(messages, model) < get_token_limit(model) - tolerance
 
-    async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict) -> ChatCompletionResult:
-        try:
-            result = await to_thread(openai.ChatCompletion.create,
-                                   model=model,
-                                   messages=[message.to_dict() for message in messages],
-                                   **params
-                                   )
-            converted_result = ChatCompletionResult(
-                message=ChatCompletionMessage.from_dict(result.choices[0].message),
-                finish_reason=result.choices[0].finish_reason,
-                provider=self.provider_name(),
-                model=result.model,
-                **result.usage
-            )
+    async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage],
+                                        params: dict) -> ChatCompletionResult:
+        result = await self.__client.chat.completions.create(
+            model=model,
+            messages=[message.to_dict() for message in messages],
+            **params
+        )
+        converted_result = ChatCompletionResult(
+            message=ChatCompletionMessage.from_dict(result.choices[0].message.dict()),
+            finish_reason=ChatCompletionFinishReason(result.choices[0].finish_reason),
+            provider=self.provider_name(),
+            model=result.model,
+            **result.usage.dict()
+        )
 
-            return converted_result
+        return converted_result
 
-        except (openai.error.APIError, openai.error.Timeout, openai.error.APIConnectionError,
-                openai.error.ServiceUnavailableError) as e:
-            raise ChatCompletionRetryRequestedException(e) from e
 
     def count_token_in_messages(self, messages: list[ChatCompletionMessage], model: str) -> int:
         encoding = get_encoder_for_model(model)
@@ -84,6 +90,7 @@ class GPTChatCompletionAPI(ChatCompletionAPI):
             "gpt-4-32k-0314",
             "gpt-4-0613",
             "gpt-4-32k-0613",
+            "gpt-4-0125-preview"
         }:
             tokens_per_message = 3
             tokens_per_name = 1
@@ -91,10 +98,12 @@ class GPTChatCompletionAPI(ChatCompletionAPI):
             tokens_per_message = 4  # every message follows <|start|>{role/name}\n{content}<|end|>\n
             tokens_per_name = -1  # if there's a name, the role is omitted
         elif "gpt-3.5-turbo" in model:
-            print("Warning: gpt-3.5-turbo may update over time. Returning num tokens assuming gpt-3.5-turbo-0613.")
+            #print("Warning: gpt-3.5-turbo may update over time. Returning num tokens assuming gpt-3.5-turbo-0613.")
             return self.count_token_in_messages(messages, model=ChatGPTModel.GPT_3_5_0613)
+        elif "gpt-4-turbo-preview" in model:
+            return self.count_token_in_messages(messages,model=ChatGPTModel.GPT_4_0125)
         elif "gpt-4" in model:
-            print("Warning: gpt-4 may update over time. Returning num tokens assuming gpt-4-0613.")
+            #print("Warning: gpt-4 may update over time. Returning num tokens assuming gpt-4-0613.")
             return self.count_token_in_messages(messages, model=ChatGPTModel.GPT_4_0613)
         else:
             raise NotImplementedError(
