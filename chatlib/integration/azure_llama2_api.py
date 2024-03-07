@@ -107,7 +107,7 @@ class AzureLlama2ChatCompletionAPI(ChatCompletionAPI):
                     message=ChatCompletionMessage.from_dict(json_response["choices"][0]["message"]),
                     finish_reason=json_response["choices"][0]["finish_reason"],
                     provider=self.provider_name(),
-                    model=json_response["model"],
+                    model=model,
                     **json_response["usage"]
                 )
             else:

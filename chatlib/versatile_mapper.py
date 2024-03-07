@@ -1,0 +1,98 @@
+import json
+from dataclasses import dataclass
+from itertools import chain
+from typing import TypeVar, Generic, Callable, Any
+
+from jinja2 import Template
+
+from chatlib.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionMessageRole, \
+    ChatCompletionFinishReason
+from chatlib.chatbot import ChatCompletionParams
+
+
+@dataclass(frozen=True)
+class ChatCompletionFewShotMapperParams:
+    model: str
+    api_params: ChatCompletionParams
+
+
+InputType = TypeVar('InputType')
+OutputType = TypeVar('OutputType')
+ParamsType = TypeVar('ParamsType', bound=ChatCompletionFewShotMapperParams)
+
+
+@dataclass(frozen=True)
+class MapperInputOutputPair(Generic[InputType, OutputType]):
+    input: InputType
+    output: OutputType
+
+
+class ChatCompletionFewShotMapper(Generic[InputType, OutputType, ParamsType]):
+    class StringConverters:
+        str_to_json_dict_converter: Callable[[str, Any], dict] = lambda input: json.loads(input)
+
+    def __init__(self,
+                 api: ChatCompletionAPI,
+                 instruction_generator: Callable[[InputType, ParamsType | None], str] | str,
+                 input_str_converter: Callable[[InputType, ParamsType], str],
+                 output_str_converter: Callable[[OutputType, ParamsType], str],
+                 str_output_converter: Callable[[str, ParamsType], OutputType]
+                 ):
+        self.__api = api
+        self.__instruction_generator = instruction_generator
+        self.__str_output_converter = str_output_converter
+
+        self.__input_str_converter = input_str_converter
+        self.__output_str_converter = output_str_converter
+
+    @property
+    def api(self) -> ChatCompletionAPI:
+        return self.__api
+
+    async def run(self,
+                  examples: list[MapperInputOutputPair[InputType, OutputType]] | None,
+                  input: InputType,
+                  params: ParamsType,
+                  output_malformed_retry_count: int = 5
+                  ) -> OutputType:
+        if examples is not None:  # TODO cache example messages
+            example_messages = list(chain.from_iterable([[
+                ChatCompletionMessage(self.__input_str_converter(example.output, params),
+                                      ChatCompletionMessageRole.SYSTEM, "example_user"),
+                ChatCompletionMessage(self.__output_str_converter(example.output, params),
+                                      ChatCompletionMessageRole.SYSTEM, "example_assistant")
+            ] for example in examples]))
+        else:
+            example_messages = None
+
+        if isinstance(self.__instruction_generator, str):
+            instruction = self.__instruction_generator
+        else:
+            instruction = self.__instruction_generator(input, params)
+
+        messages = [ChatCompletionMessage(content=instruction, role=ChatCompletionMessageRole.SYSTEM)]
+
+        if example_messages is not None:
+            messages.extend(example_messages)
+
+        messages.append(ChatCompletionMessage(content=self.__input_str_converter(input, params),
+                                              role=ChatCompletionMessageRole.USER))
+
+        left_retry_count = output_malformed_retry_count
+        while True:
+            chat_response = await self.__api.run_chat_completion(params.model, messages, params.api_params.to_dict())
+
+            if chat_response.finish_reason == ChatCompletionFinishReason.Stop:
+                try:
+                    return self.__str_output_converter(chat_response.message.content, params)
+                except:  # If converting fails
+                    if output_malformed_retry_count > 0:
+                        print(
+                            f"Output converting failed. retry count left: {output_malformed_retry_count}, : {chat_response.message.content}")
+                        left_retry_count -= 1
+                        continue
+                    else:
+                        raise Exception(
+                            "Output malformed for conversion. Consumed all retry count. PLease check your instruction.")
+            else:
+                raise Exception(chat_response.finish_reason)
