@@ -36,7 +36,7 @@ def __turn_to_string(turn: DialogueTurn) -> str:
         return f"<AI> {turn.message} ({turn.metadata.__str__() if turn.metadata is not None else None}) - {turn.processing_time} sec"
 
 
-def __print_turn(turn: DialogueTurn, user_alias: str | None = None, ai_alias: str | None = None):
+def __print_turn(turn: DialogueTurn, user_alias: str | None = None, ai_alias: str | None = None, print_metadata: bool = True, print_processing_time: bool = True):
     user_alias = user_alias or "You"
     ai_alias = ai_alias or "AI"
     if turn.is_user:
@@ -50,10 +50,10 @@ def __print_turn(turn: DialogueTurn, user_alias: str | None = None, ai_alias: st
 
     text = f"<b>{html.escape(f'<{alias}>')}</b> {message_opened_tag}{html.escape(turn.message)}{message_closed_tag}"
 
-    if turn.metadata is not None and len(turn.metadata.items()) > 0:
+    if print_metadata and turn.metadata is not None and len(turn.metadata.items()) > 0:
         text += f"\n{html.escape(json.dumps(turn.metadata, indent=2))}"
 
-    if turn.processing_time is not None:
+    if print_processing_time and turn.processing_time is not None:
         text += f" - {turn.processing_time} sec"
 
     print_formatted_text(HTML(text))
@@ -111,12 +111,18 @@ async def run_chat_loop_from_session(session: TurnTakingChatSession, initialize:
 
 async def run_auto_chat_loop(agent_generator: ResponseGenerator, user_generator: ResponseGenerator,
                              max_turns: int = 8,
-                             output_path: str = None, user_alias: str = None, ai_alias: str = None):
+                             output_path: str = None, user_alias: str = None, ai_alias: str = None,
+                             print_metadata: bool = True, print_processing_time: bool = True):
     session_id = generate_id()
 
     print(f"Start a chat session (id: {session_id}).")
     session = MultiAgentChatSession(session_id, agent_generator, user_generator)
-    dialogue = await session.generate_conversation(max_turns, lambda turn: __print_turn(turn, user_alias=user_alias, ai_alias=ai_alias))
+    dialogue = await session.generate_conversation(max_turns,
+                                                   lambda turn: __print_turn(turn,
+                                                                             user_alias=user_alias,
+                                                                             ai_alias=ai_alias,
+                                                                             print_metadata=False,
+                                                                             print_processing_time=False))
 
     output_path = output_path or path.join(getcwd(), f"auto_chat_{session_id}.txt")
     with open(output_path, "w", encoding='utf-8') as f:
