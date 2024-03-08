@@ -42,7 +42,7 @@ class TogetherAPI(ChatCompletionAPI):
             "model": model,
             "n": 1,
             "stream": False,
-            "messages": [msg.to_dict() for msg in messages]
+            "messages": [msg.dict() for msg in messages]
         }
 
         headers = {
@@ -56,7 +56,7 @@ class TogetherAPI(ChatCompletionAPI):
             json_response = json.loads(response.text)
             print(json_response)
             return ChatCompletionResult(
-                message=ChatCompletionMessage.from_dict(json_response["choices"][0]["message"]),
+                message=ChatCompletionMessage(**json_response["choices"][0]["message"]),
                 finish_reason=ChatCompletionFinishReason.Stop,
                 provider=self.provider_name(),
                 model=json_response["model"],

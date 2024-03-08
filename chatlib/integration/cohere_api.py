@@ -68,7 +68,7 @@ class CohereChatAPI(ChatCompletionAPI):
                                             )
 
         return ChatCompletionResult(
-            message=ChatCompletionMessage(response.text, ChatCompletionMessageRole.ASSISTANT),
+            message=ChatCompletionMessage(content=response.text, role=ChatCompletionMessageRole.ASSISTANT),
             finish_reason=ChatCompletionFinishReason.Stop,
             provider=self.provider_name(),
             model=model,

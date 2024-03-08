@@ -104,9 +104,9 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatFewShotParamsType],
         if self.__examples is not None:
             if self.__example_messages_cache is None:
                 self.__example_messages_cache = list(chain.from_iterable([[
-                    ChatCompletionMessage(self._convert_input_to_message_content(sample, params),
-                                          ChatCompletionMessageRole.SYSTEM, "example_user"),
-                    ChatCompletionMessage(label, ChatCompletionMessageRole.SYSTEM, "example_assistant")
+                    ChatCompletionMessage(content=self._convert_input_to_message_content(sample, params),
+                                          role=ChatCompletionMessageRole.SYSTEM, name="example_user"),
+                    ChatCompletionMessage(content=label, role=ChatCompletionMessageRole.SYSTEM, name="example_assistant")
                 ] for sample, label in self.__examples]))
 
             return self.__example_messages_cache
@@ -120,7 +120,7 @@ class ChatGPTFewShotMapper(Mapper[InputType, OutputType, ChatFewShotParamsType],
             self.__generator.base_instruction = self.base_instruction.render(**params.instruction_params)
 
         resp, _, _ = await self.__generator.get_response(
-            [DialogueTurn(self._convert_input_to_message_content(input, params), True)])
+            [DialogueTurn(message=self._convert_input_to_message_content(input, params), is_user=True)])
         # print(resp)
 
         try:

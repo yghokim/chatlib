@@ -1,4 +1,5 @@
-from typing import TypeAlias
+from typing import TypeAlias, Optional
+from pydantic import BaseModel, Field, ConfigDict
 
 import nanoid
 
@@ -10,20 +11,15 @@ class RegenerateRequestException(Exception):
         self.reason = reason
 
 
-class DialogueTurn:
-    def __init__(self, message: str,
-                 is_user: bool = True,
-                 id: str = None,
-                 timestamp: int = None,
-                 processing_time: int | None = None,
-                 metadata: dict | None = None
-                 ):
-        self.message = message
-        self.is_user = is_user
-        self.id = id if id is not None else nanoid.generate(size=20)
-        self.timestamp = timestamp if timestamp is not None else get_timestamp()
-        self.processing_time = processing_time
-        self.metadata = metadata
+class DialogueTurn(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    message: str
+    is_user: bool = True
+    id: str = Field(default_factory=lambda: nanoid.generate(size=20))
+    timestamp: int = Field(default_factory=get_timestamp)
+    processing_time: Optional[int] = None
+    metadata: dict | None = None
 
 
 Dialogue: TypeAlias = list[DialogueTurn]

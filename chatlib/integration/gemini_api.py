@@ -112,12 +112,12 @@ class GeminiAPI(ChatCompletionAPI):
                 1].role is ChatCompletionMessageRole.ASSISTANT:
                 return messages
             else:
-                return [messages[0]] + [ChatCompletionMessage(self.__injected_initial_system_message,
-                                                              ChatCompletionMessageRole.ASSISTANT)] + messages[1:]
+                return [messages[0]] + [ChatCompletionMessage(content=self.__injected_initial_system_message,
+                                                              role=ChatCompletionMessageRole.ASSISTANT)] + messages[1:]
         else:
             return messages + [
-                ChatCompletionMessage(self.__injected_initial_system_message, ChatCompletionMessageRole.ASSISTANT),
-                ChatCompletionMessage("Hi!", ChatCompletionMessageRole.USER)]
+                ChatCompletionMessage(content=self.__injected_initial_system_message, role=ChatCompletionMessageRole.ASSISTANT),
+                ChatCompletionMessage(content="Hi!", role=ChatCompletionMessageRole.USER)]
 
     async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict) -> ChatCompletionResult:
         injected_messages = self.__convert_messages(messages)
@@ -134,7 +134,7 @@ class GeminiAPI(ChatCompletionAPI):
         safety_ratings = {r.category: r.probability for r in response.prompt_feedback.safety_ratings}
 
         return ChatCompletionResult(
-                message=ChatCompletionMessage.from_dict(top_choice["message"]),
+                message=ChatCompletionMessage(**top_choice["message"]),
                 finish_reason=top_choice["finish_reason"],
                 provider=self.provider_name(),
                 model=model

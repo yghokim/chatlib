@@ -84,13 +84,13 @@ class AnthropicChatCompletionAPI(ChatCompletionAPI):
 
         completion_result = self.__client.beta.messages.create(model=model,
                                                                system=system_prompt if system_prompt is not None else None,
-                                                               messages=[msg.to_dict() for msg in messages],
+                                                               messages=[msg.dict() for msg in messages],
                                                                max_tokens=1024,
                                                                **params,
                                                                )
 
         return ChatCompletionResult(
-            message=ChatCompletionMessage(completion_result.content[0].text, role=ChatCompletionMessageRole.ASSISTANT),
+            message=ChatCompletionMessage(content=completion_result.content[0].text, role=ChatCompletionMessageRole.ASSISTANT),
             finish_reason=convert_anthropic_stop_reason(completion_result.stop_reason) if completion_result.stop_reason is not None else ChatCompletionFinishReason.Stop,
             model=model,
             provider=self.provider_name(),

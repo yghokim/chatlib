@@ -66,11 +66,11 @@ class GPTChatCompletionAPI(ChatCompletionAPI):
                                         params: dict) -> ChatCompletionResult:
         result = await self.__client.chat.completions.create(
             model=model,
-            messages=[message.to_dict() for message in messages],
+            messages=[message.dict() for message in messages],
             **params
         )
         converted_result = ChatCompletionResult(
-            message=ChatCompletionMessage.from_dict(result.choices[0].message.dict()),
+            message=ChatCompletionMessage(**result.choices[0].message.dict()),
             finish_reason=ChatCompletionFinishReason(result.choices[0].finish_reason),
             provider=self.provider_name(),
             model=result.model,
@@ -113,7 +113,7 @@ class GPTChatCompletionAPI(ChatCompletionAPI):
         num_tokens = 0
         for message in messages:
             num_tokens += tokens_per_message
-            for key, value in message.to_dict().items():
+            for key, value in message.dict().items():
                 try:
                     num_tokens += len(encoding.encode(value))
                 except:

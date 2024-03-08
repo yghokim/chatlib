@@ -29,7 +29,7 @@ if __name__ == "__main__":
         str_output_converter=str_output_convert
     )
 
-    params = ChatCompletionFewShotMapperParams(ChatGPTModel.GPT_3_5_0613, ChatCompletionParams())
+    params = ChatCompletionFewShotMapperParams(model=ChatGPTModel.GPT_3_5_0613, api_params=ChatCompletionParams())
 
     async def run():
         mapper.api.authorize()

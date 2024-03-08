@@ -95,7 +95,7 @@ class AzureLlama2ChatCompletionAPI(ChatCompletionAPI):
 
     async def _run_chat_completion_impl(self, model: str, messages: list[ChatCompletionMessage], params: dict) -> Any:
         req = request.Request(AzureLlama2Environment.get_chat_completions_endpoint(), str.encode(json.dumps({
-            "messages": [msg.to_dict() for msg in messages],
+            "messages": [msg.dict() for msg in messages],
             **params
         })), AzureLlama2Environment.get_request_headers(), method="POST")
 
@@ -104,7 +104,7 @@ class AzureLlama2ChatCompletionAPI(ChatCompletionAPI):
             if response.status == HTTPStatus.OK:
                 json_response = json.loads(response.read())
                 return ChatCompletionResult(
-                    message=ChatCompletionMessage.from_dict(json_response["choices"][0]["message"]),
+                    message=ChatCompletionMessage(**json_response["choices"][0]["message"]),
                     finish_reason=json_response["choices"][0]["finish_reason"],
                     provider=self.provider_name(),
                     model=model,
@@ -122,7 +122,7 @@ class AzureLlama2ChatCompletionAPI(ChatCompletionAPI):
         num_tokens = 0
         for message in messages:
             num_tokens += tokens_per_message
-            for key, value in message.to_dict().items():
+            for key, value in message.dict().items():
                 try:
                     num_tokens += len(self.get_tokenizer().encode(value))
                 except Exception as e:

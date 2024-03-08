@@ -79,14 +79,14 @@ class TurnTakingChatSession(ChatSessionBase):
     async def initialize(self) -> DialogueTurn:
         self._dialog.clear()
         initial_message, metadata, elapsed = await self._response_generator.get_response(self._dialog)
-        system_turn = DialogueTurn(initial_message, is_user=False, processing_time=elapsed, metadata=metadata)
+        system_turn = DialogueTurn(message=initial_message, is_user=False, processing_time=elapsed, metadata=metadata)
         self._push_new_turn(system_turn)
         return system_turn
 
     async def push_user_message(self, user_turn: DialogueTurn) -> DialogueTurn:
         self._push_new_turn(user_turn)
         system_message, metadata, elapsed = await self._response_generator.get_response(self._dialog)
-        system_turn = DialogueTurn(system_message, is_user=False, processing_time=elapsed, metadata=metadata)
+        system_turn = DialogueTurn(message=system_message, is_user=False, processing_time=elapsed, metadata=metadata)
         self._push_new_turn(system_turn)
         return system_turn
 
@@ -96,7 +96,7 @@ class TurnTakingChatSession(ChatSessionBase):
             system_message, metadata, elapsed = await self._response_generator.get_response(self._dialog, dry=True)
             metadata = set_nested_value(metadata, "regenerated", True)
             metadata = set_nested_value(metadata, "original_turn", popped_system_turn.__dict__)
-            new_system_turn = DialogueTurn(system_message, is_user=False, processing_time=elapsed, metadata=metadata)
+            new_system_turn = DialogueTurn(message=system_message, is_user=False, processing_time=elapsed, metadata=metadata)
             self._push_new_turn(new_system_turn)
             return new_system_turn
         else:
@@ -151,7 +151,7 @@ class MultiAgentChatSession(ChatSessionBase):
         while self.__is_stop_requested == False and max_turns > turn_count:
             turn_count += 1
             system_message, payload, elapsed = await self._response_generator.get_response(self.dialog)
-            system_turn = DialogueTurn(system_message, False, processing_time=elapsed, metadata=payload)
+            system_turn = DialogueTurn(message=system_message, is_user=False, processing_time=elapsed, metadata=payload)
             self._push_new_turn(system_turn)
             on_message(system_turn)
 
@@ -160,7 +160,7 @@ class MultiAgentChatSession(ChatSessionBase):
 
             user_message, payload, elapsed = await self.__user_generator.get_response(role_reverted_dialog)
 
-            user_turn = DialogueTurn(user_message, True, processing_time=elapsed, metadata=payload)
+            user_turn = DialogueTurn(message=user_message, is_user=True, processing_time=elapsed, metadata=payload)
             self._push_new_turn(user_turn)
             on_message(user_turn)
 

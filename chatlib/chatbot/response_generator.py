@@ -1,11 +1,12 @@
 import json
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, asdict
 from functools import cache
 from time import perf_counter
-from typing import TypeAlias, Callable, Awaitable, Any, TypedDict, Optional
+from typing import TypeAlias, Callable, Awaitable, Any, Optional
+from typing_extensions import TypedDict
 
 from jinja2 import Template
+from pydantic import BaseModel, Field, ConfigDict
 
 from .types import Dialogue, RegenerateRequestException
 from .. import dict_utils
@@ -84,16 +85,17 @@ class ChatCompletionFunctionInfo(TypedDict):
     parameters: ChatCompletionFunctionParameters
 
 
-@dataclass(kw_only=True, frozen=True)
-class ChatCompletionParams:
-    temperature: float | None = None
-    presence_penalty: float | None = None
-    frequency_penalty: float | None = None
-    functions: list[ChatCompletionFunctionInfo | dict] | None = None
+class ChatCompletionParams(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    temperature: Optional[float] = Field(None, ge=0, le=2.0)
+    presence_penalty: Optional[float] = Field(None, ge=-2, le=2)
+    frequency_penalty: Optional[float] = Field(None, ge=-2, le=2)
+    tools: list[ChatCompletionFunctionInfo | dict] | None = None
 
     @cache
-    def to_dict(self) -> dict:
-        return {key: value for key, value in asdict(self).items() if value is not None}
+    def dict(self) -> dict:
+        return super().dict(exclude_none=True)
 
 
 class ChatCompletionResponseGenerator(ResponseGenerator):
@@ -192,18 +194,18 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
 
             original_message = dict_utils.get_nested_value(turn.metadata, ["chatcompletion", "token_uncleaned_message"])
             dialogue_converted.append(
-                ChatCompletionMessage(original_message if original_message is not None else turn.message,
-                                      ChatCompletionMessageRole.USER if turn.is_user else ChatCompletionMessageRole.ASSISTANT))
+                ChatCompletionMessage(content=original_message if original_message is not None else turn.message,
+                                      role=ChatCompletionMessageRole.USER if turn.is_user else ChatCompletionMessageRole.ASSISTANT))
 
         instruction = self.__instruction
         if instruction is not None:
 
-            instruction_turn = ChatCompletionMessage(instruction, ChatCompletionMessageRole.SYSTEM)
+            instruction_turn = ChatCompletionMessage(content=instruction, role=ChatCompletionMessageRole.SYSTEM)
 
             messages = [instruction_turn]
             if self.initial_user_message is not None:
                 if isinstance(self.initial_user_message, str):
-                    messages.append(ChatCompletionMessage(self.initial_user_message, ChatCompletionMessageRole.USER))
+                    messages.append(ChatCompletionMessage(content=self.initial_user_message, role=ChatCompletionMessageRole.USER))
                 else:
                     messages.extend(self.initial_user_message)
 
@@ -213,7 +215,7 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
 
         result: ChatCompletionResult
         if self.__api.is_messages_within_token_limit(messages, self.model, self.__token_limit_tolerance):
-            result = await self.__api.run_chat_completion(self.model, messages, self.__params.to_dict())
+            result = await self.__api.run_chat_completion(self.model, messages, self.__params.dict())
         else:
             print(f"Token overflow - {len(messages)} message(s).")
             if self.__token_limit_exceed_handler is not None:
@@ -241,11 +243,11 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
                 if self.verbose: print(f"Call function - {function_name} ({function_args})")
 
                 function_call_result = await self.function_handler(function_name, function_args)
-                function_turn = ChatCompletionMessage(function_call_result, ChatCompletionMessageRole.TOOL,
+                function_turn = ChatCompletionMessage(content=function_call_result, role=ChatCompletionMessageRole.TOOL,
                                                       name=function_name, tool_call_id=tool_call.id)
                 function_messages.append(function_turn)
 
-            new_result = await self.__api.run_chat_completion(self.model, messages + function_messages, self.__params.to_dict())
+            new_result = await self.__api.run_chat_completion(self.model, messages + function_messages, self.__params.dict())
 
             if new_result.finish_reason == ChatCompletionFinishReason.Stop:
                 response_text = new_result.message.content
@@ -260,7 +262,7 @@ class ChatCompletionResponseGenerator(ResponseGenerator):
 
     def write_to_json(self, parcel: dict):
         parcel["model"] = self.model
-        parcel["params"] = self.__params.to_dict()
+        parcel["params"] = self.__params.dict()
         parcel["initial_user_message"] = self.initial_user_message
         parcel["base_instruction"] = self.__base_instruction
         parcel["instruction_parameters"] = self.__instruction_parameters

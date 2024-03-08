@@ -6,16 +6,13 @@ from functools import cache
 from os import path, getcwd
 from typing import Optional, Any, Callable
 
-from dacite import from_dict, Config
-
 from dotenv import find_dotenv, set_key
+from pydantic import BaseModel, ConfigDict
 from questionary import prompt
 from stringcase import constcase
 
 from chatlib import env_helper
 from chatlib.global_config import GlobalConfig
-
-dacite_config = Config(cast=[StrEnum])
 
 
 class ChatCompletionMessageRole(StrEnum):
@@ -39,8 +36,9 @@ class ChatCompletionToolCall:
     type: str = "function"
 
 
-@dataclass(frozen=True)
-class ChatCompletionMessage:
+class ChatCompletionMessage(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     content: str | None
 
     role: ChatCompletionMessageRole
@@ -49,12 +47,8 @@ class ChatCompletionMessage:
     tool_calls: list[ChatCompletionToolCall] | None = None
 
     @cache
-    def to_dict(self) -> dict:
-        return {k: v for k, v in asdict(self).items() if v is not None}
-
-    @classmethod
-    def from_dict(cls, obj: dict) -> 'ChatCompletionMessage':
-        return from_dict(data_class=cls, data=obj, config=dacite_config)
+    def dict(self) -> dict:
+        return super().dict(exclude_none=True)
 
 
 class ChatCompletionFinishReason(StrEnum):

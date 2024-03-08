@@ -104,7 +104,7 @@ async def run_chat_loop_from_session(session: TurnTakingChatSession, initialize:
             spinner.stop()
         else:
             spinner.start()
-            system_turn = await session.push_user_message(DialogueTurn(user_message, is_user=True))
+            system_turn = await session.push_user_message(DialogueTurn(message=user_message, is_user=True))
             spinner.stop()
             __print_turn(system_turn)
 
