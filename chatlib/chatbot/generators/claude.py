@@ -22,6 +22,6 @@ class ClaudeResponseGenerator(ChatCompletionResponseGenerator):
                  function_handler: Callable[[str, dict | None], Awaitable[Any]] | None = None,
                  special_tokens: list[tuple[str, str, Any]] | None = None, verbose: bool = False,
                  token_limit_exceed_handler: TokenLimitExceedHandler | None = None, token_limit_tolerance: int = 1024):
-        super().__init__(self.get_api(), AnthropicModel.CLAUDE_21, base_instruction, instruction_parameters,
+        super().__init__(self.get_api(), AnthropicModel.CLAUDE_3_OPUS_20240229, base_instruction, instruction_parameters,
                          initial_user_message, chat_completion_params, function_handler, special_tokens, verbose,
                          token_limit_exceed_handler, token_limit_tolerance)

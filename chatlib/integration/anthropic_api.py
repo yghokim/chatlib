@@ -42,6 +42,7 @@ def convert_anthropic_stop_reason(reason: str | Literal["end_turn", "max_tokens"
 
 class AnthropicModel(StrEnum):
     CLAUDE_21 = "claude-2.1"
+    CLAUDE_3_OPUS_20240229 = "claude-3-opus-20240229"
 
 
 # https://docs.anthropic.com/claude/reference/messages_post
