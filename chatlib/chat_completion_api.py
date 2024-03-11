@@ -7,7 +7,7 @@ from os import path, getcwd
 from typing import Optional, Any, Callable
 
 from dotenv import find_dotenv, set_key
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from questionary import prompt
 from stringcase import constcase
 
@@ -58,13 +58,14 @@ class ChatCompletionFinishReason(StrEnum):
     ContentFilter = "content_filter"
 
 
-@dataclass(frozen=True)
-class ChatCompletionResult:
+class ChatCompletionResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     message: ChatCompletionMessage
     finish_reason: ChatCompletionFinishReason
 
-    provider: str
-    model: str
+    provider: str = Field(min_length=1)
+    model: str = Field(min_length=1)
 
     completion_tokens: int | None = None
     prompt_tokens: int | None = None
