@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict
 from chatlib.chatbot import ChatCompletionParams
 from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionMessageRole, \
     ChatCompletionFinishReason
+from chatlib.tool.converter import str_to_str_noop
 
 
 class ChatCompletionFewShotMapperParams(BaseModel):
@@ -29,13 +30,10 @@ class MapperInputOutputPair(BaseModel, Generic[InputType, OutputType]):
 
 
 class ChatCompletionFewShotMapper(Generic[InputType, OutputType, ParamsType]):
-    class StringConverters:
-        str_to_json_dict_converter: Callable[[str, Any], dict] = lambda input: json.loads(input)
-
     def __init__(self,
                  api: ChatCompletionAPI,
                  instruction_generator: Callable[[InputType, ParamsType | None], str] | str,
-                 input_str_converter: Callable[[InputType, ParamsType], str],
+                 input_str_converter: Callable[[InputType, ParamsType], str] | None,
                  output_str_converter: Callable[[OutputType, ParamsType], str],
                  str_output_converter: Callable[[str, ParamsType], OutputType]
                  ):
@@ -43,7 +41,7 @@ class ChatCompletionFewShotMapper(Generic[InputType, OutputType, ParamsType]):
         self.__instruction_generator = instruction_generator
         self.__str_output_converter = str_output_converter
 
-        self.__input_str_converter = input_str_converter
+        self.__input_str_converter = input_str_converter or str_to_str_noop
         self.__output_str_converter = output_str_converter
 
     @property
@@ -58,7 +56,7 @@ class ChatCompletionFewShotMapper(Generic[InputType, OutputType, ParamsType]):
                   ) -> OutputType:
         if examples is not None:  # TODO cache example messages
             example_messages = list(chain.from_iterable([[
-                ChatCompletionMessage(content=self.__input_str_converter(example.output, params),
+                ChatCompletionMessage(content=self.__input_str_converter(example.input, params),
                                       role=ChatCompletionMessageRole.SYSTEM, name="example_user"),
                 ChatCompletionMessage(content=self.__output_str_converter(example.output, params),
                                       role=ChatCompletionMessageRole.SYSTEM, name="example_assistant")
