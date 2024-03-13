@@ -2,8 +2,8 @@ from enum import StrEnum
 from functools import cache
 from typing import Any
 
-from openai import AsyncOpenAI
 import tiktoken
+from openai import AsyncOpenAI
 
 from chatlib.llm.chat_completion_api import ChatCompletionMessage, ChatCompletionAPI, APIAuthorizationVariableSpec, \
     APIAuthorizationVariableType, ChatCompletionResult, \

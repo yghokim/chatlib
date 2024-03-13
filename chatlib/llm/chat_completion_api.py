@@ -1,6 +1,6 @@
 import re
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from enum import StrEnum
 from functools import cache
 from os import path, getcwd
@@ -11,8 +11,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from questionary import prompt
 from stringcase import constcase
 
-from chatlib import env_helper
 from chatlib.global_config import GlobalConfig
+from chatlib.utils import env_helper
 
 
 class ChatCompletionMessageRole(StrEnum):

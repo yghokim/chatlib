@@ -1,6 +1,7 @@
 from enum import StrEnum
 from functools import cache
 from typing import Any, Literal
+
 from anthropic import Client, Anthropic, HUMAN_PROMPT, AI_PROMPT
 
 from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionResult, \

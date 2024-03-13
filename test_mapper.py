@@ -4,7 +4,7 @@ from time import perf_counter
 
 from chatlib.chatbot import ChatCompletionParams
 from chatlib.llm.integration import GPTChatCompletionAPI, ChatGPTModel
-from chatlib.llm.versatile_mapper import ChatCompletionFewShotMapper, ChatCompletionFewShotMapperParams, \
+from chatlib.tool.versatile_mapper import ChatCompletionFewShotMapper, ChatCompletionFewShotMapperParams, \
     MapperInputOutputPair
 
 if __name__ == "__main__":

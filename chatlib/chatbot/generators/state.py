@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic
 
-from chatlib import dict_utils
 from chatlib.chatbot import ResponseGenerator, Dialogue
 from chatlib.chatbot.message_transformer import MessageTransformerChain
+from chatlib.utils import dict_utils
 
 StateType = TypeVar('StateType')
 

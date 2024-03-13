@@ -3,17 +3,17 @@ from abc import ABC, abstractmethod
 from functools import cache
 from time import perf_counter
 from typing import TypeAlias, Callable, Awaitable, Any, Optional
-from typing_extensions import TypedDict
 
 from jinja2 import Template
 from pydantic import BaseModel, Field, ConfigDict
+from typing_extensions import TypedDict
 
-from .types import Dialogue, RegenerateRequestException
-from .. import dict_utils
-from chatlib.llm.chat_completion_api import ChatCompletionMessage, ChatCompletionAPI, ChatCompletionMessageRole, \
-    TokenLimitExceedError, ChatCompletionFinishReason, ChatCompletionResult
 from chatlib.chatbot.message_transformer import MessageTransformerChain, run_message_transformer_chain, \
     SpecialTokenListExtractionTransformer
+from chatlib.llm.chat_completion_api import ChatCompletionMessage, ChatCompletionAPI, ChatCompletionMessageRole, \
+    TokenLimitExceedError, ChatCompletionFinishReason, ChatCompletionResult
+from .types import Dialogue, RegenerateRequestException
+from ..utils import dict_utils
 
 
 class ResponseGenerator(ABC):

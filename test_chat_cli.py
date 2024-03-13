@@ -2,17 +2,17 @@ import asyncio
 
 from questionary import prompt
 
-from chatlib import cli
 from chatlib.chatbot.generators import ChatGPTResponseGenerator
 from chatlib.chatbot.generators.claude import ClaudeResponseGenerator
 from chatlib.chatbot.generators.cohere import CohereResponseGenerator
 from chatlib.chatbot.generators.gemini import GeminiResponseGenerator
 from chatlib.chatbot.generators.llama import Llama2ResponseGenerator
 from chatlib.chatbot.generators.together import TogetherAIResponseGenerator
+from chatlib.global_config import GlobalConfig
 from chatlib.llm.integration import AnthropicModel
 from chatlib.llm.integration import ChatGPTModel
 from chatlib.llm.integration import TogetherAIModel
-from chatlib.global_config import GlobalConfig
+from chatlib.utils import cli
 
 agent_args = dict(
     base_instruction="You are a helpful assistant that asks the user about their daily activity and feelings. "

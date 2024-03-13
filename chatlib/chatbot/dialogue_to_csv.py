@@ -5,8 +5,8 @@ from typing import TypeAlias, Callable
 
 import pendulum
 
-from chatlib import dict_utils
 from chatlib.chatbot import DialogueTurn, Dialogue
+from chatlib.utils import dict_utils
 
 ColumnValueExtractor: TypeAlias = Callable[[DialogueTurn, int, dict | None], str | Number | None]
 

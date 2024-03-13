@@ -1,18 +1,16 @@
 import asyncio
+import html
 import json
 from os import getcwd, path
 from typing import Callable, TypeAlias, Awaitable
 
 import questionary
-
 from nanoid import generate as generate_id
+from prompt_toolkit import print_formatted_text, HTML
 from yaspin import yaspin
 
-from chatlib.llm.chat_completion_api import make_non_empty_string_validator
 from chatlib.chatbot import ResponseGenerator, TurnTakingChatSession, DialogueTurn, MultiAgentChatSession
-
-from prompt_toolkit import print_formatted_text, HTML
-import html
+from chatlib.llm.chat_completion_api import make_non_empty_string_validator
 
 CommandDef: TypeAlias = tuple[list[str] | str, Callable[[TurnTakingChatSession], None | Awaitable]]
 

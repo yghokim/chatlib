@@ -4,9 +4,9 @@ from typing import TypeVar, Generic, Callable, Any
 
 from pydantic import BaseModel, ConfigDict
 
+from chatlib.chatbot import ChatCompletionParams
 from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionMessageRole, \
     ChatCompletionFinishReason
-from chatlib.chatbot import ChatCompletionParams
 
 
 class ChatCompletionFewShotMapperParams(BaseModel):

@@ -1,9 +1,9 @@
 from typing import TypeAlias, Optional
-from pydantic import BaseModel, Field, ConfigDict
 
 import nanoid
+from pydantic import BaseModel, Field, ConfigDict
 
-from chatlib.time import get_timestamp
+from chatlib.utils.time import get_timestamp
 
 
 class RegenerateRequestException(Exception):

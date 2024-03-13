@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from re import Pattern
 from typing import TypeAlias, Callable
 
-from chatlib import dict_utils
+from chatlib.utils import dict_utils
 
 
 class MessageTransformer(Callable[[str, dict | None], tuple[str, dict | None, bool]], ABC):

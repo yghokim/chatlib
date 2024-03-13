@@ -1,10 +1,10 @@
 from abc import ABC
 from typing import Callable
 
+from chatlib.utils.dict_utils import set_nested_value
 from .response_generator import ResponseGenerator
 from .session_writer import SessionWriterBase, session_writer
 from .types import Dialogue, DialogueTurn
-from ..dict_utils import set_nested_value
 
 
 class ChatSessionBase(ABC):
