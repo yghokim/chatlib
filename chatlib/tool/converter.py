@@ -1,4 +1,5 @@
 import json
+import re
 from typing import Type, Callable, Any, TypeVar
 
 from pydantic import BaseModel
@@ -12,8 +13,15 @@ def generate_pydantic_converter(cls: Type[BaseModelType]) -> tuple[
         lambda input, params: input.json())
 
 
+markdown_json_block_pattern = r'^```(json)?\s*(.*?)\s*```$'
+
+
 def str_to_json_dict_converter(input: str, params: Any) -> dict:
-    return json.loads(input)
+    match = re.search(markdown_json_block_pattern, input, re.DOTALL)
+    if match:
+        return json.loads(match.group(2))
+    else:
+        return json.loads(input)
 
 
 def json_dict_to_str_converter(input: dict, params: Any) -> str:
