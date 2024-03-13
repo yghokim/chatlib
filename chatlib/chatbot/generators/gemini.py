@@ -3,9 +3,9 @@ from typing import Any
 
 from jinja2 import Template
 
-from chatlib.chat_completion_api import ChatCompletionMessage
+from chatlib.llm.chat_completion_api import ChatCompletionMessage
 from chatlib.chatbot import ChatCompletionResponseGenerator, ChatCompletionParams, TokenLimitExceedHandler
-from chatlib.integration.gemini_api import GeminiAPI
+from chatlib.llm.integration import GeminiAPI
 
 
 class GeminiResponseGenerator(ChatCompletionResponseGenerator):

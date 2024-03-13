@@ -10,7 +10,7 @@ from urllib import request, error, parse
 
 from transformers import AutoTokenizer
 
-from chatlib.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, TokenLimitExceedError, \
+from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, TokenLimitExceedError, \
     APIAuthorizationVariableSpec, APIAuthorizationVariableType, ChatCompletionRetryRequestedException, \
     ChatCompletionResult
 

@@ -4,7 +4,7 @@ from typing import Any
 
 from cohere import AsyncClient
 
-from chatlib.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionResult, \
+from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionResult, \
     APIAuthorizationVariableSpec, APIAuthorizationVariableType, ChatCompletionMessageRole, ChatCompletionFinishReason
 
 

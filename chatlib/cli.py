@@ -8,7 +8,7 @@ import questionary
 from nanoid import generate as generate_id
 from yaspin import yaspin
 
-from chatlib.chat_completion_api import make_non_empty_string_validator
+from chatlib.llm.chat_completion_api import make_non_empty_string_validator
 from chatlib.chatbot import ResponseGenerator, TurnTakingChatSession, DialogueTurn, MultiAgentChatSession
 
 from prompt_toolkit import print_formatted_text, HTML

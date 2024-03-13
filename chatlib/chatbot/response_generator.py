@@ -10,9 +10,9 @@ from pydantic import BaseModel, Field, ConfigDict
 
 from .types import Dialogue, RegenerateRequestException
 from .. import dict_utils
-from ..chat_completion_api import ChatCompletionMessage, ChatCompletionAPI, ChatCompletionMessageRole, \
+from chatlib.llm.chat_completion_api import ChatCompletionMessage, ChatCompletionAPI, ChatCompletionMessageRole, \
     TokenLimitExceedError, ChatCompletionFinishReason, ChatCompletionResult
-from ..message_transformer import MessageTransformerChain, run_message_transformer_chain, \
+from chatlib.chatbot.message_transformer import MessageTransformerChain, run_message_transformer_chain, \
     SpecialTokenListExtractionTransformer
 
 

@@ -3,9 +3,9 @@ from typing import Callable, Awaitable, Any
 
 from jinja2 import Template
 
-from chatlib.chat_completion_api import ChatCompletionMessage
+from chatlib.llm.chat_completion_api import ChatCompletionMessage
 from chatlib.chatbot import TokenLimitExceedHandler, ChatCompletionResponseGenerator, ChatCompletionParams
-from chatlib.integration.openai_api import GPTChatCompletionAPI, ChatGPTModel
+from chatlib.llm.integration import GPTChatCompletionAPI, ChatGPTModel
 
 
 class ChatGPTResponseGenerator(ChatCompletionResponseGenerator):

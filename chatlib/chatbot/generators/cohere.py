@@ -3,9 +3,9 @@ from typing import Callable, Awaitable, Any
 
 from jinja2 import Template
 
-from chatlib.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage
+from chatlib.llm.chat_completion_api import ChatCompletionMessage
 from chatlib.chatbot import ChatCompletionResponseGenerator, ChatCompletionParams, TokenLimitExceedHandler
-from chatlib.integration.cohere_api import CohereModel, CohereChatAPI
+from chatlib.llm.integration import CohereModel, CohereChatAPI
 
 
 class CohereResponseGenerator(ChatCompletionResponseGenerator):

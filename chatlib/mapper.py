@@ -6,11 +6,11 @@ from typing import TypeVar, Generic, Callable
 
 from jinja2 import Template
 
-from chatlib.chat_completion_api import ChatCompletionMessage, ChatCompletionMessageRole
+from chatlib.llm.chat_completion_api import ChatCompletionMessage, ChatCompletionMessageRole
 from chatlib.chatbot import DialogueTurn, Dialogue, RegenerateRequestException, TokenLimitExceedHandler, \
     ChatCompletionParams
 from chatlib.chatbot.generators import ChatGPTResponseGenerator
-from chatlib.integration.openai_api import ChatGPTModel
+from chatlib.llm.integration import ChatGPTModel
 from chatlib.jinja_utils import convert_to_jinja_template
 
 InputType = TypeVar('InputType')

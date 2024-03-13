@@ -3,9 +3,9 @@ from typing import Callable, Awaitable, Any
 
 from jinja2 import Template
 
-from chatlib.chat_completion_api import ChatCompletionMessage
+from chatlib.llm.chat_completion_api import ChatCompletionMessage
 from chatlib.chatbot import ChatCompletionResponseGenerator, TokenLimitExceedHandler, ChatCompletionParams
-from chatlib.integration.azure_llama2_api import AzureLlama2ChatCompletionAPI
+from chatlib.llm.integration import AzureLlama2ChatCompletionAPI
 
 
 class Llama2ResponseGenerator(ChatCompletionResponseGenerator):

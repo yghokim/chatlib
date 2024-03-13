@@ -3,9 +3,8 @@ import json
 from time import perf_counter
 
 from chatlib.chatbot import ChatCompletionParams
-from chatlib.integration.azure_llama2_api import AzureLlama2ChatCompletionAPI
-from chatlib.integration.openai_api import GPTChatCompletionAPI, ChatGPTModel
-from chatlib.versatile_mapper import ChatCompletionFewShotMapper, ChatCompletionFewShotMapperParams, \
+from chatlib.llm.integration import GPTChatCompletionAPI, ChatGPTModel
+from chatlib.llm.versatile_mapper import ChatCompletionFewShotMapper, ChatCompletionFewShotMapperParams, \
     MapperInputOutputPair
 
 if __name__ == "__main__":

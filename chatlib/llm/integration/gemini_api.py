@@ -6,9 +6,9 @@ import google.generativeai as genai
 from google.ai.generativelanguage_v1 import Candidate
 from google.generativeai.types import GenerateContentResponse
 
-from chatlib.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionMessageRole, \
+from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionMessageRole, \
     APIAuthorizationVariableSpec, APIAuthorizationVariableType
-from chatlib.chat_completion_api import ChatCompletionResult
+from chatlib.llm.chat_completion_api import ChatCompletionResult
 
 # https://ai.google.dev/tutorials/python_quickstart
 # https://github.com/google/generative-ai-python/blob/main/google/generativeai/generative_models.py#L382-L423

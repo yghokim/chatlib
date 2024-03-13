@@ -6,7 +6,7 @@ from typing import Any
 
 import requests
 
-from chatlib.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, APIAuthorizationVariableSpec, \
+from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, APIAuthorizationVariableSpec, \
     APIAuthorizationVariableType, ChatCompletionResult, ChatCompletionFinishReason
 
 

@@ -3,9 +3,9 @@ from typing import Callable, Awaitable, Any
 
 from jinja2 import Template
 
-from chatlib.chat_completion_api import ChatCompletionMessage
+from chatlib.llm.chat_completion_api import ChatCompletionMessage
 from chatlib.chatbot import ChatCompletionResponseGenerator, ChatCompletionParams, TokenLimitExceedHandler
-from chatlib.integration.anthropic_api import AnthropicChatCompletionAPI, AnthropicModel
+from chatlib.llm.integration import AnthropicChatCompletionAPI, AnthropicModel
 
 
 class ClaudeResponseGenerator(ChatCompletionResponseGenerator):

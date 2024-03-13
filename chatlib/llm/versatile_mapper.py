@@ -4,7 +4,7 @@ from typing import TypeVar, Generic, Callable, Any
 
 from pydantic import BaseModel, ConfigDict
 
-from chatlib.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionMessageRole, \
+from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionMessageRole, \
     ChatCompletionFinishReason
 from chatlib.chatbot import ChatCompletionParams
 

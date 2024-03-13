@@ -1,4 +1,3 @@
-from asyncio import to_thread
 from enum import StrEnum
 from functools import cache
 from typing import Any
@@ -6,8 +5,8 @@ from typing import Any
 from openai import AsyncOpenAI
 import tiktoken
 
-from chatlib.chat_completion_api import ChatCompletionMessage, ChatCompletionAPI, APIAuthorizationVariableSpec, \
-    APIAuthorizationVariableType, ChatCompletionRetryRequestedException, ChatCompletionResult, \
+from chatlib.llm.chat_completion_api import ChatCompletionMessage, ChatCompletionAPI, APIAuthorizationVariableSpec, \
+    APIAuthorizationVariableType, ChatCompletionResult, \
     ChatCompletionFinishReason
 
 
