@@ -84,10 +84,11 @@ class ChatCompletionFewShotMapper(Generic[InputType, OutputType, ParamsType]):
             if chat_response.finish_reason == ChatCompletionFinishReason.Stop:
                 try:
                     return self.__str_output_converter(chat_response.message.content, params)
-                except:  # If converting fails
+                except Exception as e:  # If converting fails
                     if left_retry_count > 0:
                         print(
-                            f"Output converting failed. retry count left: {output_malformed_retry_count}, : {chat_response.message.content}")
+                            f"Output converting failed. retry count left: {left_retry_count}, Content: \"{chat_response.message.content}\"")
+                        print(f"Error: {e}")
                         left_retry_count -= 1
                         continue
                     else:
