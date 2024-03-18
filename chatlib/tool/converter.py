@@ -12,7 +12,7 @@ BaseModelType = TypeVar('BaseModelType', bound=BaseModel)
 
 @cache
 def get_type_adapter(cls: Type[DataType]) -> TypeAdapter[DataType]:
-    return TypeAdapter[cls]
+    return TypeAdapter(cls)
 
 
 def generate_pydantic_converter(cls: Type[BaseModelType]) -> tuple[
