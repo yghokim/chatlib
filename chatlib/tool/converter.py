@@ -24,7 +24,7 @@ def generate_pydantic_converter(cls: Type[BaseModelType]) -> tuple[
 def generate_type_converter(cls: Type[DataType]) -> tuple[
     Callable[[str, Any], DataType], Callable[[DataType, Any], str]]:
     return (lambda input, params: get_type_adapter(cls).validate_json(input)), (
-        lambda input, params: input.dump_json())
+        lambda input, params: get_type_adapter(cls).dump_json(input).decode('utf-8'))
 
 
 markdown_json_block_pattern = r'^```(json)?\s*(.*?)\s*```$'
