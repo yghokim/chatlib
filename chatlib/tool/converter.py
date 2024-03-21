@@ -62,7 +62,7 @@ def yaml_str_to_dict_converter(input: str, params: Any) -> dict:
     if match:
         input = match.group(2)
 
-    return yaml.load(io.StringIO(input))
+    return yaml.load(io.StringIO(input), Loader=yaml.FullLoader)
 
 
 def dict_to_yaml_str_converter(input: dict, params: Any) -> str:

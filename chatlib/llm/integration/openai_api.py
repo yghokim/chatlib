@@ -13,20 +13,23 @@ from chatlib.llm.chat_completion_api import ChatCompletionMessage, ChatCompletio
 class ChatGPTModel(StrEnum):
     GPT_3_5_latest = "gpt-3.5-turbo"
     GPT_3_5_16k_latest = "gpt-3.5-turbo-16k"
+    GPT_3_5_0613 = "gpt-3.5-turbo-0613"
+    GPT_3_5_1106 = "gpt-3.5-turbo-1106"
+    GPT_3_5_0125 = "gpt-3.5-turbo-0125"
     GPT_4_latest = "gpt-4"
     GPT_4_32k_latest = "gpt-4-32k"
     GPT_4_0613 = "gpt-4-0613"
-    GPT_3_5_0613 = "gpt-3.5-turbo-0613"
     GPT_4_TURBO = "gpt-4-turbo-preview"
     GPT_4_0125 = "gpt-4-0125-preview"
+    GPT_4_1106 = "gpt-4-1106-preview"
 
 
 def get_token_limit(model: str):
     if model is ChatGPTModel.GPT_4_32k_latest:
         return 32000
-    elif model is ChatGPTModel.GPT_3_5_16k_latest:
+    elif model is ChatGPTModel.GPT_3_5_16k_latest or model is ChatGPTModel.GPT_3_5_0125 or model is ChatGPTModel.GPT_3_5_1106:
         return 16000
-    elif model is ChatGPTModel.GPT_4_0125:
+    elif model is ChatGPTModel.GPT_4_0125 or model is ChatGPTModel.GPT_4_1106:
         return 128000
     elif model.startswith("gpt-4-turbo"):
         return 128000
