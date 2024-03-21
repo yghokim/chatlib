@@ -101,7 +101,17 @@ def make_non_empty_string_validator(msg: str) -> Callable:
     return lambda text: True if len(text.strip()) > 0 else msg
 
 
+class ChatCompletionAPIGlobalConfig(BaseModel):
+    verbose: bool | None = False
+
+
 class ChatCompletionAPI(ABC):
+
+    def __init__(self):
+        self.__config = ChatCompletionAPIGlobalConfig(verbose=False)
+
+    def config(self) -> ChatCompletionAPIGlobalConfig:
+        return self.__config
 
     @classmethod
     @abstractmethod
@@ -208,11 +218,16 @@ class ChatCompletionAPI(ABC):
         result = None
         while trial <= trial_count and result is None:
             try:
+                if self.config().verbose:
+                    print(f"Run chat completion on {model} with messages:", messages)
+
                 result = await self._run_chat_completion_impl(model, messages, params)
             except ChatCompletionRetryRequestedException as e:
                 result = None
                 trial += 1
-                print(f"Retry chat completion of {self.provider_name} - {e.caused_by}")
+
+                if self.config().verbose:
+                    print(f"Retry chat completion of {self.provider_name} - {e.caused_by}")
 
         return result
 

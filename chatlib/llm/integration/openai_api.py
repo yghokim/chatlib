@@ -45,6 +45,7 @@ class GPTChatCompletionAPI(ChatCompletionAPI):
     @cache
     def provider_name(self) -> str:
         return "Open AI"
+
     @classmethod
     def get_auth_variable_specs(cls) -> list[APIAuthorizationVariableSpec]:
         return [cls.__api_key_spec]
@@ -78,7 +79,6 @@ class GPTChatCompletionAPI(ChatCompletionAPI):
 
         return converted_result
 
-
     def count_token_in_messages(self, messages: list[ChatCompletionMessage], model: str) -> int:
         encoding = get_encoder_for_model(model)
 
@@ -97,12 +97,14 @@ class GPTChatCompletionAPI(ChatCompletionAPI):
             tokens_per_message = 4  # every message follows <|start|>{role/name}\n{content}<|end|>\n
             tokens_per_name = -1  # if there's a name, the role is omitted
         elif "gpt-3.5-turbo" in model:
-            #print("Warning: gpt-3.5-turbo may update over time. Returning num tokens assuming gpt-3.5-turbo-0613.")
+            if self.config().verbose:
+                print("Warning: gpt-3.5-turbo may update over time. Returning num tokens assuming gpt-3.5-turbo-0613.")
             return self.count_token_in_messages(messages, model=ChatGPTModel.GPT_3_5_0613)
         elif "gpt-4-turbo-preview" in model:
-            return self.count_token_in_messages(messages,model=ChatGPTModel.GPT_4_0125)
+            return self.count_token_in_messages(messages, model=ChatGPTModel.GPT_4_0125)
         elif "gpt-4" in model:
-            #print("Warning: gpt-4 may update over time. Returning num tokens assuming gpt-4-0613.")
+            if self.config().verbose:
+                print("Warning: gpt-4 may update over time. Returning num tokens assuming gpt-4-0613.")
             return self.count_token_in_messages(messages, model=ChatGPTModel.GPT_4_0613)
         else:
             raise NotImplementedError(

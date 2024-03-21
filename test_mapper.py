@@ -2,7 +2,7 @@ import asyncio
 import json
 from time import perf_counter
 
-from chatlib.tool.converter import json_dict_to_str_converter, str_to_json_dict_converter
+from chatlib.tool.converter import dict_to_json_str_converter, json_str_to_dict_converter
 
 from chatlib.chatbot import ChatCompletionParams
 from chatlib.llm.integration import GPTChatCompletionAPI, ChatGPTModel
@@ -16,8 +16,8 @@ if __name__ == "__main__":
         api=GPTChatCompletionAPI(),
         instruction_generator="Given the following plain text paragraph, extract the information into a JSON object that includes the name, age, and list of hobbies. Note that the hobbies should contain what the person is currently enjoying.",
         input_str_converter=None,
-        output_str_converter=json_dict_to_str_converter,
-        str_output_converter=str_to_json_dict_converter
+        output_str_converter=dict_to_json_str_converter,
+        str_output_converter=json_str_to_dict_converter
     )
 
     params = ChatCompletionFewShotMapperParams(model=ChatGPTModel.GPT_3_5_0613, api_params=ChatCompletionParams())
