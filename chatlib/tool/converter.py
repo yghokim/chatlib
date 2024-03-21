@@ -24,10 +24,10 @@ def generate_pydantic_converter(cls: Type[BaseModelType],
 
     if serialization_type == 'json':
         return (lambda input, params: cls(**json_str_to_dict_converter(input, params))), (
-            lambda input, params: input.json(**serialization_kwargs))
+            lambda input, params: input.json(**serialization_kwargs) if serialization_kwargs is not None else input.json())
     elif serialization_type == 'yaml':
         return (lambda input, params: cls(**yaml_str_to_dict_converter(input, params))), (
-            lambda input, params: dict_to_yaml_str_converter(input.json(**serialization_kwargs), params))
+            lambda input, params: dict_to_yaml_str_converter(input.json(**serialization_kwargs) if serialization_kwargs is not None else input.json(), params))
 
 
 def generate_type_converter(cls: Type[DataType], serialization_type: Literal['json'] | Literal['yaml'] = 'json') -> tuple[
