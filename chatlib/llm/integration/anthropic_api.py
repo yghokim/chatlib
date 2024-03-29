@@ -5,7 +5,8 @@ from typing import Any, Literal
 from anthropic import Client, Anthropic, HUMAN_PROMPT, AI_PROMPT
 
 from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionResult, \
-    APIAuthorizationVariableSpec, APIAuthorizationVariableType, ChatCompletionMessageRole, ChatCompletionFinishReason
+    ChatCompletionMessageRole, ChatCompletionFinishReason
+from chatlib.utils.integration import APIAuthorizationVariableType, APIAuthorizationVariableSpec
 
 
 def create_anthropic_prompt(messages: list[ChatCompletionMessage]) -> str:

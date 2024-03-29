@@ -11,8 +11,9 @@ from urllib import request, error, parse
 from transformers import AutoTokenizer
 
 from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, TokenLimitExceedError, \
-    APIAuthorizationVariableSpec, APIAuthorizationVariableType, ChatCompletionRetryRequestedException, \
+    ChatCompletionRetryRequestedException, \
     ChatCompletionResult
+from chatlib.utils.integration import APIAuthorizationVariableType, APIAuthorizationVariableSpec
 
 
 class AzureLlama2Environment:

@@ -10,11 +10,12 @@ from prompt_toolkit import print_formatted_text, HTML
 from yaspin import yaspin
 
 from chatlib.chatbot import ResponseGenerator, TurnTakingChatSession, DialogueTurn, MultiAgentChatSession
-from chatlib.llm.chat_completion_api import make_non_empty_string_validator
+from chatlib.utils.validator import make_non_empty_string_validator
 
 CommandDef: TypeAlias = tuple[list[str] | str, Callable[[TurnTakingChatSession], None | Awaitable]]
 
 CLEAR_LINE = '\033[K'
+
 
 async def regen(session: TurnTakingChatSession):
     system_turn = await session.regenerate_last_system_message()
@@ -127,3 +128,4 @@ async def run_auto_chat_loop(agent_generator: ResponseGenerator, user_generator:
         f.writelines([f"{__turn_to_string(turn)}\n" for i, turn in enumerate(dialogue)])
 
     print(f"\nSaved conversation at {output_path}")
+

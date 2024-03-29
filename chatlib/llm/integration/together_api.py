@@ -6,8 +6,8 @@ from typing import Any
 
 import requests
 
-from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, APIAuthorizationVariableSpec, \
-    APIAuthorizationVariableType, ChatCompletionResult, ChatCompletionFinishReason
+from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionResult, ChatCompletionFinishReason
+from chatlib.utils.integration import APIAuthorizationVariableType, APIAuthorizationVariableSpec
 
 
 class TogetherAIModel(StrEnum):

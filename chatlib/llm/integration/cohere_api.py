@@ -5,7 +5,8 @@ from typing import Any
 from cohere import AsyncClient
 
 from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionResult, \
-    APIAuthorizationVariableSpec, APIAuthorizationVariableType, ChatCompletionMessageRole, ChatCompletionFinishReason
+    ChatCompletionMessageRole, ChatCompletionFinishReason
+from chatlib.utils.integration import APIAuthorizationVariableType, APIAuthorizationVariableSpec
 
 
 class CohereModel(StrEnum):

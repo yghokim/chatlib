@@ -5,9 +5,9 @@ from typing import Any
 import tiktoken
 from openai import AsyncOpenAI
 
-from chatlib.llm.chat_completion_api import ChatCompletionMessage, ChatCompletionAPI, APIAuthorizationVariableSpec, \
-    APIAuthorizationVariableType, ChatCompletionResult, \
+from chatlib.llm.chat_completion_api import ChatCompletionMessage, ChatCompletionAPI, ChatCompletionResult, \
     ChatCompletionFinishReason
+from chatlib.utils.integration import APIAuthorizationVariableType, APIAuthorizationVariableSpec
 
 
 class ChatGPTModel(StrEnum):
