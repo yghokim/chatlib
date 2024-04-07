@@ -30,6 +30,12 @@ class MapperInputOutputPair(BaseModel, Generic[InputType, OutputType]):
 
 
 class ChatCompletionFewShotMapper(Generic[InputType, OutputType, ParamsType]):
+
+    @classmethod
+    def make_str_mapper(cls, api: ChatCompletionAPI,
+                 instruction_generator: Callable[[str, ParamsType | None], str] | str) -> 'ChatCompletionFewShotMapper[str, str, ParamsType]':
+        return ChatCompletionFewShotMapper(api, instruction_generator, str_to_str_noop, str_to_str_noop, str_to_str_noop)
+
     def __init__(self,
                  api: ChatCompletionAPI,
                  instruction_generator: Callable[[InputType, ParamsType | None], str] | str,
