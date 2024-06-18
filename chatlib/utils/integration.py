@@ -17,6 +17,7 @@ from chatlib.utils import env_helper
 
 class APIAuthorizationVariableType(StrEnum):
     ApiKey = "api_key"
+    ClientId = "client_id"
     Secret = "secret"
     Host = "host"
     Key = "key"
@@ -103,6 +104,16 @@ class IntegrationService(ABC):
                 default_question_spec.update({
                     "message": f'Please enter a host address for {cls.provider_name()}:',
                     "validate": make_non_empty_string_validator("Please enter a valid address.")
+                })
+            elif spec.variable_type is APIAuthorizationVariableType.ClientId:
+                default_question_spec.update({
+                    "message": f'Please enter a client id for {cls.provider_name()}:',
+                    "validate": make_non_empty_string_validator("Please enter a valid string.")
+                })
+            elif spec.variable_type is APIAuthorizationVariableType.Secret:
+                default_question_spec.update({
+                    "message": f'Please enter a secret for {cls.provider_name()}:',
+                    "validate": make_non_empty_string_validator("Please enter a valid string.")
                 })
 
             questions.append(default_question_spec)
