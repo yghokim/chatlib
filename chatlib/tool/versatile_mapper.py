@@ -41,7 +41,8 @@ class ChatCompletionFewShotMapper(Generic[InputType, OutputType, ParamsType]):
                  instruction_generator: Callable[[InputType, ParamsType | None], str] | str,
                  input_str_converter: Callable[[InputType, ParamsType], str] | None,
                  output_str_converter: Callable[[OutputType, ParamsType], str],
-                 str_output_converter: Callable[[str, ParamsType], OutputType]
+                 str_output_converter: Callable[[str, ParamsType], OutputType],
+                 output_validator: Callable[[InputType, OutputType], bool] | None = None
                  ):
         self.__api = api
         self.__instruction_generator = instruction_generator
@@ -49,6 +50,8 @@ class ChatCompletionFewShotMapper(Generic[InputType, OutputType, ParamsType]):
 
         self.__input_str_converter = input_str_converter or str_to_str_noop
         self.__output_str_converter = output_str_converter
+
+        self.__output_validator = output_validator
 
     @property
     def api(self) -> ChatCompletionAPI:
@@ -89,7 +92,14 @@ class ChatCompletionFewShotMapper(Generic[InputType, OutputType, ParamsType]):
 
             if chat_response.finish_reason == ChatCompletionFinishReason.Stop:
                 try:
-                    return self.__str_output_converter(chat_response.message.content, params)
+                    output = self.__str_output_converter(chat_response.message.content, params)
+                    if self.__output_validator is not None:
+                        if self.__output_validator(input, output) is True:
+                            return output
+                        else:
+                            raise ValueError("Output validation failed.")
+                    else:
+                        return output
                 except Exception as e:  # If converting fails
                     if left_retry_count > 0:
                         print(
