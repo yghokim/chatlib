@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from functools import cache
 from os import path, getcwd
-from typing import Any
+from typing import Any, Optional
 
 from dotenv import find_dotenv, set_key
 from questionary import prompt
@@ -15,17 +15,30 @@ from chatlib.utils.validator import make_non_empty_string_validator
 from chatlib.utils import env_helper
 
 
-class APIAuthorizationVariableType(StrEnum):
-    ApiKey = "api_key"
-    ClientId = "client_id"
-    Secret = "secret"
-    Host = "host"
-    Key = "key"
+class APIAuthorizationVariableType:
+    ApiKey: str = "api_key"
+    ClientId: str = "client_id"
+    Secret: str = "secret"
+    Host: str = "host"
+    Key: str = "key"
 
 
 @dataclass(frozen=True)
 class APIAuthorizationVariableSpec:
-    variable_type: APIAuthorizationVariableType
+    variable_type: str
+    human_readable_type_name: str
+    validation_error_message: Optional[str] = None
+
+
+class APIAuthorizationVariableSpecPresets:
+    ApiKey = APIAuthorizationVariableSpec(variable_type=APIAuthorizationVariableType.ApiKey,
+                                          human_readable_type_name="API Key")
+    ClientId = APIAuthorizationVariableSpec(variable_type=APIAuthorizationVariableType.ClientId,
+                                            human_readable_type_name="Client ID")
+    Key = APIAuthorizationVariableSpec(variable_type=APIAuthorizationVariableType.Key,
+                                       human_readable_type_name="Key")
+    Host = APIAuthorizationVariableSpec(variable_type=APIAuthorizationVariableType.Host, human_readable_type_name="Host")
+    Secret = APIAuthorizationVariableSpec(variable_type=APIAuthorizationVariableType.Secret, human_readable_type_name="Secret")
 
 
 class ServiceUnauthorizedError(Exception):
@@ -116,7 +129,12 @@ class IntegrationService(ABC):
                     "validate": make_non_empty_string_validator("Please enter a valid string.")
                 })
 
-            questions.append(default_question_spec)
+            questions.append({
+                'type': 'text',
+                'name': cls.env_key_for_spec(spec),
+                "message": f'Please enter a {spec.human_readable_type_name} for {cls.provider_name()}:',
+                "validate": make_non_empty_string_validator(spec.validation_error_message if spec.validation_error_message is not None else f"Please enter a valid {spec.human_readable_type_name}.")
+            })
 
         answers = prompt(questions)
 

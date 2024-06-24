@@ -13,7 +13,8 @@ from transformers import AutoTokenizer
 from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, TokenLimitExceedError, \
     ChatCompletionRetryRequestedException, \
     ChatCompletionResult
-from chatlib.utils.integration import APIAuthorizationVariableType, APIAuthorizationVariableSpec
+from chatlib.utils.integration import APIAuthorizationVariableType, APIAuthorizationVariableSpec, \
+    APIAuthorizationVariableSpecPresets
 
 
 class AzureLlama2Environment:
@@ -67,8 +68,8 @@ class Llama2Model(StrEnum):
 
 
 class AzureLlama2ChatCompletionAPI(ChatCompletionAPI):
-    __host_spec = APIAuthorizationVariableSpec(variable_type=APIAuthorizationVariableType.Host)
-    __key_spec = APIAuthorizationVariableSpec(variable_type=APIAuthorizationVariableType.Key)
+    __host_spec = APIAuthorizationVariableSpecPresets.Host
+    __key_spec = APIAuthorizationVariableSpecPresets.Key
 
     @classmethod
     @cache

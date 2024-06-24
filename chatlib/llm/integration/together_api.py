@@ -7,7 +7,8 @@ from typing import Any
 import requests
 
 from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionResult, ChatCompletionFinishReason
-from chatlib.utils.integration import APIAuthorizationVariableType, APIAuthorizationVariableSpec
+from chatlib.utils.integration import APIAuthorizationVariableSpec, \
+    APIAuthorizationVariableSpecPresets
 
 
 class TogetherAIModel(StrEnum):
@@ -18,7 +19,7 @@ class TogetherAIModel(StrEnum):
 class TogetherAPI(ChatCompletionAPI):
     __ENDPOINT = "https://api.together.xyz/v1/chat/completions"
 
-    __api_key_spec = APIAuthorizationVariableSpec(APIAuthorizationVariableType.ApiKey)
+    __api_key_spec = APIAuthorizationVariableSpecPresets.ApiKey
 
     @classmethod
     @cache

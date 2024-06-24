@@ -7,7 +7,8 @@ from google.ai.generativelanguage_v1 import Candidate
 from google.generativeai.types import GenerateContentResponse
 
 from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionMessageRole
-from chatlib.utils.integration import APIAuthorizationVariableType, APIAuthorizationVariableSpec
+from chatlib.utils.integration import APIAuthorizationVariableType, APIAuthorizationVariableSpec, \
+    APIAuthorizationVariableSpecPresets
 from chatlib.llm.chat_completion_api import ChatCompletionResult
 
 # https://ai.google.dev/tutorials/python_quickstart
@@ -67,7 +68,7 @@ def convert_candidate_to_choice(candidate: Candidate) -> dict:
 
 
 class GeminiAPI(ChatCompletionAPI):
-    __api_key_spec = APIAuthorizationVariableSpec(APIAuthorizationVariableType.ApiKey)
+    __api_key_spec = APIAuthorizationVariableSpecPresets.ApiKey
 
     @classmethod
     @cache

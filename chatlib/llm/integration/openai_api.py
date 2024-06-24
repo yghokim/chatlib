@@ -7,7 +7,8 @@ from openai import AsyncOpenAI
 
 from chatlib.llm.chat_completion_api import ChatCompletionMessage, ChatCompletionAPI, ChatCompletionResult, \
     ChatCompletionFinishReason
-from chatlib.utils.integration import APIAuthorizationVariableType, APIAuthorizationVariableSpec
+from chatlib.utils.integration import APIAuthorizationVariableType, APIAuthorizationVariableSpec, \
+    APIAuthorizationVariableSpecPresets
 
 
 class ChatGPTModel(StrEnum):
@@ -43,7 +44,7 @@ def get_token_limit(model: str):
 
 
 class GPTChatCompletionAPI(ChatCompletionAPI):
-    __api_key_spec = APIAuthorizationVariableSpec(APIAuthorizationVariableType.ApiKey)
+    __api_key_spec = APIAuthorizationVariableSpecPresets.ApiKey
 
     @classmethod
     @cache

@@ -6,7 +6,8 @@ from cohere import AsyncClient
 
 from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionResult, \
     ChatCompletionMessageRole, ChatCompletionFinishReason
-from chatlib.utils.integration import APIAuthorizationVariableType, APIAuthorizationVariableSpec
+from chatlib.utils.integration import APIAuthorizationVariableType, APIAuthorizationVariableSpec, \
+    APIAuthorizationVariableSpecPresets
 
 
 class CohereModel(StrEnum):
@@ -81,4 +82,4 @@ class CohereChatAPI(ChatCompletionAPI):
     def count_token_in_messages(self, messages: list[ChatCompletionMessage], model: str) -> int:
         pass
 
-    __api_key_spec = APIAuthorizationVariableSpec(APIAuthorizationVariableType.ApiKey)
+    __api_key_spec = APIAuthorizationVariableSpecPresets.ApiKey

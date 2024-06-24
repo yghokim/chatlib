@@ -6,7 +6,8 @@ from anthropic import Client, Anthropic, HUMAN_PROMPT, AI_PROMPT
 
 from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionResult, \
     ChatCompletionMessageRole, ChatCompletionFinishReason
-from chatlib.utils.integration import APIAuthorizationVariableType, APIAuthorizationVariableSpec
+from chatlib.utils.integration import APIAuthorizationVariableType, APIAuthorizationVariableSpec, \
+    APIAuthorizationVariableSpecPresets
 
 
 def create_anthropic_prompt(messages: list[ChatCompletionMessage]) -> str:
@@ -51,7 +52,7 @@ class AnthropicModel(StrEnum):
 
 class AnthropicChatCompletionAPI(ChatCompletionAPI):
 
-    __api_key_spec = APIAuthorizationVariableSpec(APIAuthorizationVariableType.ApiKey)
+    __api_key_spec = APIAuthorizationVariableSpecPresets.ApiKey
 
     @classmethod
     @cache
