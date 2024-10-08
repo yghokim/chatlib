@@ -4,10 +4,11 @@ from typing import TypeVar, Generic, Callable, Any
 
 from pydantic import BaseModel, ConfigDict
 
-from chatlib.chatbot import ChatCompletionParams
+from chatlib.chatbot import ChatCompletionParams, Dialogue, DialogueTurn
 from chatlib.llm.chat_completion_api import ChatCompletionAPI, ChatCompletionMessage, ChatCompletionMessageRole, \
     ChatCompletionFinishReason
 from chatlib.tool.converter import str_to_str_noop
+from chatlib.utils.jinja_utils import convert_to_jinja_template
 
 
 class ChatCompletionFewShotMapperParams(BaseModel):
@@ -112,3 +113,41 @@ class ChatCompletionFewShotMapper(Generic[InputType, OutputType, ParamsType]):
                             "Output malformed for conversion. Consumed all retry count. PLease check your instruction.")
             else:
                 raise Exception(chat_response.finish_reason)
+
+
+DEFAULT_USER_ALIAS = "User"
+DEFAULT_SYSTEM_ALIAS = "AI"
+
+DIALOGUE_TEMPLATE = convert_to_jinja_template("""
+<dialogue>
+{% for turn in dialogue %}
+{%- if turn.is_user == true %}{{user_alias}}{%-else-%}{{system_alias}}{%-endif-%}: <msg>{{turn.message}}</msg>
+{%endfor%}</dialogue>
+""")
+
+class DialogueSummarizer(ChatCompletionFewShotMapper[Dialogue, OutputType, ParamsType]):
+
+    def __init__(self, 
+                 api: ChatCompletionAPI,
+                 instruction_generator: Callable[[Dialogue, ParamsType | None], str] | str,
+                 output_str_converter: Callable[[OutputType, ParamsType], str],
+                 str_output_converter: Callable[[str, ParamsType], OutputType],
+                 output_validator: Callable[[InputType, OutputType], bool] | None = None,
+                 dialogue_filter: Callable[[Dialogue, ParamsType | None], Dialogue] | None = None,
+                 user_alias: str | None = None,
+                 system_alias: str | None = None
+                 ):
+        super().__init__(api, instruction_generator, self._convert_input_to_message_content, output_str_converter, str_output_converter, output_validator)
+
+        self.__dialogue_filter = dialogue_filter
+        self.__user_alias = user_alias
+        self.__system_alias = system_alias
+
+    def _convert_input_to_message_content(self, input: Dialogue,
+                                          params: ParamsType | None = None) -> str:
+        user_alias = (
+            self.__user_alias if self.__user_alias is not None and len(self.__user_alias) > 0 else DEFAULT_USER_ALIAS)
+        system_alias = (
+            self.__system_alias if self.__system_alias is not None and len(self.__system_alias) > 0 else DEFAULT_SYSTEM_ALIAS)
+
+        return DIALOGUE_TEMPLATE.render(user_alias=user_alias, system_alias=system_alias, dialogue=self.__dialogue_filter(input) if self.__dialogue_filter is not None else input)
