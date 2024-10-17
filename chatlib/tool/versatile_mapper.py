@@ -150,4 +150,4 @@ class DialogueSummarizer(ChatCompletionFewShotMapper[Dialogue, OutputType, Param
         system_alias = (
             self.__system_alias if self.__system_alias is not None and len(self.__system_alias) > 0 else DEFAULT_SYSTEM_ALIAS)
 
-        return DIALOGUE_TEMPLATE.render(user_alias=user_alias, system_alias=system_alias, dialogue=self.__dialogue_filter(input) if self.__dialogue_filter is not None else input)
+        return DIALOGUE_TEMPLATE.render(user_alias=user_alias, system_alias=system_alias, dialogue=self.__dialogue_filter(input, params) if self.__dialogue_filter is not None else input)
