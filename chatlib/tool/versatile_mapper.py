@@ -153,6 +153,7 @@ class DialogueSummarizer(ChatCompletionFewShotMapper[Dialogue, OutputType, Param
         
 
         super().__init__(api, instruction_generator, 
-                         lambda d, p: DIALOGUE_TEMPLATE.render(user_alias=user_alias, system_alias=system_alias, dialogue=d), 
+                         lambda d, p: DIALOGUE_TEMPLATE.render(user_alias=user_alias, system_alias=system_alias, dialogue=self.__dialogue_filter(d, p) if self.__dialogue_filter is not None else d), 
                          output_str_converter, str_output_converter, output_validator, 
-                         lambda d, p: DIALOGUE_TEMPLATE.render(user_alias=user_alias, system_alias=system_alias, dialogue=self.__dialogue_filter(d, p) if self.__dialogue_filter is not None else d))
+                         lambda d, p: DIALOGUE_TEMPLATE.render(user_alias=user_alias, system_alias=system_alias, dialogue=d)
+                         )
