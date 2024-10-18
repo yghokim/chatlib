@@ -43,7 +43,8 @@ class ChatCompletionFewShotMapper(Generic[InputType, OutputType, ParamsType]):
                  input_str_converter: Callable[[InputType, ParamsType], str] | None,
                  output_str_converter: Callable[[OutputType, ParamsType], str],
                  str_output_converter: Callable[[str, ParamsType], OutputType],
-                 output_validator: Callable[[InputType, OutputType], bool] | None = None
+                 output_validator: Callable[[InputType, OutputType], bool] | None = None,
+                 example_str_converter: Callable[[InputType, ParamsType], str] | None = None,
                  ):
         self.__api = api
         self.__instruction_generator = instruction_generator
@@ -51,6 +52,8 @@ class ChatCompletionFewShotMapper(Generic[InputType, OutputType, ParamsType]):
 
         self.__input_str_converter = input_str_converter or str_to_str_noop
         self.__output_str_converter = output_str_converter
+
+        self.__example_str_converter = example_str_converter
 
         self.__output_validator = output_validator
 
@@ -65,8 +68,9 @@ class ChatCompletionFewShotMapper(Generic[InputType, OutputType, ParamsType]):
                   output_malformed_retry_count: int = 5
                   ) -> OutputType:
         if examples is not None:  # TODO cache example messages
+            converter = self.__example_str_converter or self.__input_str_converter
             example_messages = list(chain.from_iterable([[
-                ChatCompletionMessage(content=self.__input_str_converter(example.input, params),
+                ChatCompletionMessage(content=converter(example.input, params),
                                       role=ChatCompletionMessageRole.SYSTEM, name="example_user"),
                 ChatCompletionMessage(content=self.__output_str_converter(example.output, params),
                                       role=ChatCompletionMessageRole.SYSTEM, name="example_assistant")
@@ -137,17 +141,18 @@ class DialogueSummarizer(ChatCompletionFewShotMapper[Dialogue, OutputType, Param
                  user_alias: str | None = None,
                  system_alias: str | None = None
                  ):
-        super().__init__(api, instruction_generator, self._convert_input_to_message_content, output_str_converter, str_output_converter, output_validator)
 
         self.__dialogue_filter = dialogue_filter
         self.__user_alias = user_alias
         self.__system_alias = system_alias
 
-    def _convert_input_to_message_content(self, input: Dialogue,
-                                          params: ParamsType | None = None) -> str:
         user_alias = (
             self.__user_alias if self.__user_alias is not None and len(self.__user_alias) > 0 else DEFAULT_USER_ALIAS)
         system_alias = (
             self.__system_alias if self.__system_alias is not None and len(self.__system_alias) > 0 else DEFAULT_SYSTEM_ALIAS)
+        
 
-        return DIALOGUE_TEMPLATE.render(user_alias=user_alias, system_alias=system_alias, dialogue=self.__dialogue_filter(input, params) if self.__dialogue_filter is not None else input)
+        super().__init__(api, instruction_generator, 
+                         lambda d, p: DIALOGUE_TEMPLATE.render(user_alias=user_alias, system_alias=system_alias, dialogue=d), 
+                         output_str_converter, str_output_converter, output_validator, 
+                         lambda d, p: DIALOGUE_TEMPLATE.render(user_alias=user_alias, system_alias=system_alias, dialogue=self.__dialogue_filter(d, p) if self.__dialogue_filter is not None else d))
